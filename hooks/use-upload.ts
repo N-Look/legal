@@ -42,7 +42,7 @@ export function useUpload(): UseUploadReturn {
       }
 
       try {
-        const res = await fetch(`/api/documents/${docId}/status`);
+        const res = await fetch(`/api/documents/${docId}/status`, { cache: 'no-store' });
         const data = await res.json();
 
         setStatus(data.status);

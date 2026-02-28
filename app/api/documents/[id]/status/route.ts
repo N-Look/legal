@@ -20,7 +20,9 @@ export async function GET(
 
   // If already indexed or errored, return current status
   if (doc.backboard_status === 'indexed' || doc.backboard_status === 'error') {
-    return NextResponse.json({ status: doc.backboard_status });
+    return NextResponse.json({ status: doc.backboard_status }, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
   }
 
   // Poll Backboard for latest status
@@ -49,12 +51,18 @@ export async function GET(
         }
       }
 
-      return NextResponse.json({ status: newStatus });
+      return NextResponse.json({ status: newStatus }, {
+        headers: { 'Cache-Control': 'no-store' },
+      });
     } catch (e) {
       console.error('Failed to poll Backboard status:', e);
-      return NextResponse.json({ status: doc.backboard_status });
+      return NextResponse.json({ status: doc.backboard_status }, {
+        headers: { 'Cache-Control': 'no-store' },
+      });
     }
   }
 
-  return NextResponse.json({ status: doc.backboard_status });
+  return NextResponse.json({ status: doc.backboard_status }, {
+    headers: { 'Cache-Control': 'no-store' },
+  });
 }
