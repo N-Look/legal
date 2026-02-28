@@ -1,5 +1,5 @@
-import { MemoryManager } from "@/components/documents/memory-manager";
+import { redirect } from "next/navigation";
 
 export default function MemoryPage() {
-  return <MemoryManager />;
+  redirect("/dashboard/library");
 }

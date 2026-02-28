@@ -244,17 +244,8 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
   });
   const thread = await threadRes.json();
 
-  const form = new FormData();
-  form.append('content', question);
-  form.append('stream', 'false');
-  form.append('memory', 'auto');
-  form.append('llm_provider', 'anthropic');
-  form.append('model_name', 'claude-sonnet-4-6');
-
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
-    headers: { 'X-API-Key': apiKey },
-    body: form,
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({
       content: question,

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DocumentRow } from "./document-row";
-import { DocumentPreview } from "./document-preview";
+import { DocumentDetailModal } from "./document-detail-modal";
 import { useDocuments } from "@/hooks/use-documents";
 import { useClients } from "@/hooks/use-clients-matters";
 import type { Document, DocType } from "@/lib/types/database";
@@ -30,10 +30,10 @@ export function DocumentLibrary() {
   const [search, setSearch] = React.useState("");
   const [clientFilter, setClientFilter] = React.useState<string>("");
   const [docTypeFilter, setDocTypeFilter] = React.useState<string>("");
-  const [selectedDoc, setSelectedDoc] = React.useState<Document | null>(null);
+  const [selectedDocId, setSelectedDocId] = React.useState<string | null>(null);
 
   const { clients } = useClients();
-  const { documents, loading, togglePin } = useDocuments({
+  const { documents, loading, refetch, togglePin } = useDocuments({
     clientId: clientFilter || undefined,
     docType: (docTypeFilter as DocType) || undefined,
     search: search || undefined,
@@ -109,42 +109,43 @@ export function DocumentLibrary() {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 min-h-0">
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
-            </div>
-          ) : documents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-lg font-medium text-muted-foreground mb-1">
-                No documents found
-              </p>
-              <p className="text-sm text-muted-foreground/70">
-                Upload documents to see them here.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {documents.map((doc) => (
-                <DocumentRow
-                  key={doc.id}
-                  document={doc as Document & { clients?: { name: string }; matters?: { name: string } | null }}
-                  onPin={togglePin}
-                  onSelect={setSelectedDoc}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {selectedDoc && (
-          <DocumentPreview
-            document={selectedDoc as Document & { clients?: { name: string }; matters?: { name: string } | null }}
-            onClose={() => setSelectedDoc(null)}
-          />
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+          </div>
+        ) : documents.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-lg font-medium text-muted-foreground mb-1">
+              No documents found
+            </p>
+            <p className="text-sm text-muted-foreground/70">
+              Upload documents to see them here.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {documents.map((doc) => (
+              <DocumentRow
+                key={doc.id}
+                document={doc as Document & { clients?: { name: string }; matters?: { name: string } | null }}
+                onPin={togglePin}
+                onSelect={(d) => setSelectedDocId(d.id)}
+              />
+            ))}
+          </div>
         )}
       </div>
+
+      {/* Document Detail Modal */}
+      <DocumentDetailModal
+        documentId={selectedDocId}
+        onClose={() => setSelectedDocId(null)}
+        onDeleted={() => {
+          setSelectedDocId(null);
+          refetch();
+        }}
+      />
     </div>
   );
 }
