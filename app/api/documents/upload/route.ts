@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       let backboardAssistantId: string | null = null;
       try {
         const assistant = await createAssistant(clientName.trim());
-        backboardAssistantId = assistant.id;
+        backboardAssistantId = assistant.assistant_id;
       } catch (e) {
         console.error('Failed to create Backboard assistant:', e);
       }
@@ -48,6 +48,20 @@ export async function POST(req: NextRequest) {
 
       if (clientError) throw new Error(`Failed to create client: ${clientError.message}`);
       client = newClient;
+    }
+
+    // If existing client is missing a Backboard assistant, try to create one
+    if (!client.backboard_assistant_id) {
+      try {
+        const assistant = await createAssistant(client.name);
+        await supabaseAdmin
+          .from('clients')
+          .update({ backboard_assistant_id: assistant.assistant_id })
+          .eq('id', client.id);
+        client = { ...client, backboard_assistant_id: assistant.assistant_id };
+      } catch (e) {
+        console.error('Failed to create Backboard assistant for existing client:', e);
+      }
     }
 
     // 2. Find or create matter (if provided)
@@ -64,8 +78,8 @@ export async function POST(req: NextRequest) {
         let backboardThreadId: string | null = null;
         if (client.backboard_assistant_id) {
           try {
-            const thread = await createThread(client.backboard_assistant_id, matterName.trim());
-            backboardThreadId = thread.id;
+            const thread = await createThread(client.backboard_assistant_id);
+            backboardThreadId = thread.thread_id;
           } catch (e) {
             console.error('Failed to create Backboard thread:', e);
           }
@@ -140,7 +154,7 @@ export async function POST(req: NextRequest) {
         await supabaseAdmin
           .from('documents')
           .update({
-            backboard_document_id: bbDoc.id,
+            backboard_document_id: bbDoc.document_id,
             backboard_status: 'processing',
           })
           .eq('id', doc.id);
@@ -149,6 +163,12 @@ export async function POST(req: NextRequest) {
           .from('upload_sessions')
           .update({ status: 'processing' })
           .eq('id', session.id);
+
+        return NextResponse.json({
+          documentId: doc.id,
+          sessionId: session.id,
+          status: 'processing' as const,
+        }, { status: 201 });
       } catch (e) {
         console.error('Failed to upload to Backboard:', e);
         await supabaseAdmin
@@ -160,14 +180,29 @@ export async function POST(req: NextRequest) {
           .from('upload_sessions')
           .update({ status: 'error', error_message: String(e) })
           .eq('id', session.id);
+
+        return NextResponse.json(
+          { error: `Failed to upload to document service: ${e instanceof Error ? e.message : 'Unknown error'}` },
+          { status: 502 }
+        );
       }
     }
 
-    return NextResponse.json({
-      documentId: doc.id,
-      sessionId: session.id,
-      status: doc.backboard_status,
-    }, { status: 201 });
+    // No Backboard assistant — mark as error so the frontend doesn't poll forever
+    await supabaseAdmin
+      .from('documents')
+      .update({ backboard_status: 'error' })
+      .eq('id', doc.id);
+
+    await supabaseAdmin
+      .from('upload_sessions')
+      .update({ status: 'error', error_message: 'Document service not configured' })
+      .eq('id', session.id);
+
+    return NextResponse.json(
+      { error: 'Document service is not configured. Check your Backboard API key.' },
+      { status: 503 }
+    );
 
   } catch (e) {
     console.error('Upload error:', e);

@@ -24,12 +24,9 @@ export async function GET(
   }
 
   // Poll Backboard for latest status
-  if (doc.backboard_assistant_id && doc.backboard_document_id) {
+  if (doc.backboard_document_id) {
     try {
-      const bbDoc = await getDocumentStatus(
-        doc.backboard_assistant_id,
-        doc.backboard_document_id
-      );
+      const bbDoc = await getDocumentStatus(doc.backboard_document_id);
 
       const newStatus = bbDoc.status === 'indexed' ? 'indexed'
         : bbDoc.status === 'error' ? 'error'

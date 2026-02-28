@@ -139,7 +139,7 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
   if (!asstId) {
     const asstRes = await fetch(`${baseUrl}/assistants`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({
         name: 'Legal Research Assistant',
         system_prompt: SYSTEM_PROMPT,
@@ -151,16 +151,16 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
     asstId = asst.assistant_id;
   }
 
-  const threadRes = await fetch(`${baseUrl}/threads`, {
+  const threadRes = await fetch(`${baseUrl}/assistants/${asstId}/threads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ assistant_id: asstId }),
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({}),
   });
   const thread = await threadRes.json();
 
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({
       content: question,
       memory: 'auto',

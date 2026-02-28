@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
   let backboardThreadId: string | null = null;
   if (client?.backboard_assistant_id) {
     try {
-      const thread = await createThread(client.backboard_assistant_id, name.trim());
-      backboardThreadId = thread.id;
+      const thread = await createThread(client.backboard_assistant_id);
+      backboardThreadId = thread.thread_id;
     } catch (e) {
       console.error('Failed to create Backboard thread:', e);
     }
