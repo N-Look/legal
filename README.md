@@ -1,4 +1,4 @@
-# {{PROJECT_NAME}} Landing Page
+# Lex AI Landing Page
 
 A premium, production-ready landing page tailored for a legal operations/KM/litigation support audience. Built with Next.js (App Router), Tailwind CSS, framer-motion, and shadcn/ui.
 
@@ -29,7 +29,7 @@ A premium, production-ready landing page tailored for a legal operations/KM/liti
 - The content of the landing page is centralized directly in `app/page.tsx`.
 - Look for arrays such as `steps` and `features` to quickly modify the "How It Works" and "Feature Grid" content.
 - Update the page headlines directly in the HTML structure (e.g., search for `The Defensible Authority Companion`).
-- Replace `{{PROJECT_NAME}}` with your actual product name using a global find-and-replace.
+- All `{{PROJECT_NAME}}` placeholders have been replaced with **Lex AI**.
 
 ## How to Swap Screenshots/Branding
 

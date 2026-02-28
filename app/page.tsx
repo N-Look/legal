@@ -21,7 +21,8 @@ import {
     History,
     AlertCircle,
     Menu,
-    X
+    X,
+    Scale
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -72,9 +73,9 @@ export default function LandingPage() {
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                            {"{{"}
+                            <Scale className="w-4.5 h-4.5" />
                         </div>
-                        <span className="font-bold text-lg tracking-tight">{"{{PROJECT_NAME}}"}</span>
+                        <span className="font-bold text-lg tracking-tight">Lex AI</span>
                     </div>
 
                     <div className="hidden md:flex items-center gap-8 text-sm font-medium">
@@ -125,7 +126,7 @@ export default function LandingPage() {
                             The Defensible <br className="hidden md:block" /> Authority Companion.
                         </h1>
                         <p className="text-xl text-muted-foreground max-w-lg leading-relaxed">
-                            {"{{PROJECT_NAME}}"} automatically extracts, resolves, and fetches legal citations from your drafts, generating a court-ready, fully-auditable package.
+                            Lex AI automatically extracts, resolves, and fetches legal citations from your drafts, generating a court-ready, fully-auditable package.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 mt-4">
                             <Link href="/dashboard" className="contents">
@@ -235,7 +236,7 @@ export default function LandingPage() {
                             </ul>
                         </div>
                         <div>
-                            <h2 className="text-3xl font-bold mb-6">{"{{PROJECT_NAME}}"} is defensible.</h2>
+                            <h2 className="text-3xl font-bold mb-6">Lex AI is defensible.</h2>
                             <ul className="space-y-4 text-muted-foreground">
                                 <li className="flex gap-3">
                                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
@@ -332,7 +333,7 @@ export default function LandingPage() {
                     >
                         <h2 className="text-4xl font-bold mb-6">Tangible, court-ready deliverables.</h2>
                         <p className="text-lg text-muted-foreground mb-8">
-                            We don't just generate a chat response. {"{{PROJECT_NAME}}"} compiles a complete, structured package of authorities ready for integration into your document management system or direct filing.
+                            We don't just generate a chat response. Lex AI compiles a complete, structured package of authorities ready for integration into your document management system or direct filing.
                         </p>
                         <div className="space-y-4">
                             <div className="flex items-start gap-4">
@@ -423,7 +424,7 @@ export default function LandingPage() {
                         <div className="lg:col-span-2">
                             <LinkIcon className="w-8 h-8 mb-4 opacity-80" />
                             <h3 className="font-semibold text-lg mb-2">Optional Paid Integrations</h3>
-                            <p className="text-primary-foreground/80 text-sm">Bring your own credentials for LexisNexis, Westlaw, or PACER. {"{{PROJECT_NAME}}"} acts as a broker and never stores your raw authentication tokens.</p>
+                            <p className="text-primary-foreground/80 text-sm">Bring your own credentials for LexisNexis, Westlaw, or PACER. Lex AI acts as a broker and never stores your raw authentication tokens.</p>
                         </div>
                     </div>
                 </div>
@@ -450,7 +451,7 @@ export default function LandingPage() {
 
                 <div className="container mx-auto border-t pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
-                        <span className="font-bold text-foreground">{"{{PROJECT_NAME}}"}</span>
+                        <span className="font-bold text-foreground">Lex AI</span>
                         <span>© {new Date().getFullYear()}</span>
                     </div>
 
