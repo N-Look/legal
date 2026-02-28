@@ -362,9 +362,7 @@ export function DocumentDetailModal({
           </div>
           <div className="min-w-0 flex-1">
             <DialogTitle className="text-base font-semibold truncate">
-              {loading
-                ? "Loading..."
-                : details?.original_filename ?? "Document"}
+              {details?.original_filename ?? file?.filename ?? "Document"}
             </DialogTitle>
             {details && (
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -382,33 +380,15 @@ export function DocumentDetailModal({
         <div className="flex flex-1 min-h-0">
           {/* Left Pane: Document Viewer */}
           <div className="w-[60%] border-r border-border/50 bg-muted/20 p-4 flex flex-col min-h-0">
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-                <p className="text-sm text-destructive">{error}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => documentId && fetchDetails(documentId)}
-                  className="rounded-xl"
-                >
-                  Retry
-                </Button>
-              </div>
-            ) : details ? (
-              <div className="flex-1 min-h-0 h-full">
-                <DocumentViewer
-                  filename={details.original_filename}
-                  mimeType={details.mime_type}
-                  fileUrl={file?.url ?? null}
-                  fileLoading={fileLoading}
-                  highlightText={highlightText}
-                />
-              </div>
-            ) : null}
+            <div className="flex-1 min-h-0 h-full">
+              <DocumentViewer
+                filename={details?.original_filename ?? file?.filename ?? ""}
+                mimeType={details?.mime_type ?? file?.mimeType ?? ""}
+                fileUrl={file?.url ?? null}
+                fileLoading={fileLoading}
+                highlightText={highlightText}
+              />
+            </div>
           </div>
 
           {/* Right Pane: Tabs (Details / Chat) */}

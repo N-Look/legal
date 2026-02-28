@@ -40,20 +40,41 @@ export async function GET(
         status_message: bb.status_message ?? null,
       };
 
-      // getDocumentStatus doesn't reliably return summary — fetch from list,
-      // but cap at 5 s so a slow Backboard response never blocks the page.
+      // Use cached summary from DB if available
+      if (doc.backboard_summary) {
+        backboard_details.summary = doc.backboard_summary;
+      }
+
+      // If still no summary, try listDocuments with a 5s timeout
       if (!backboard_details.summary && doc.backboard_assistant_id) {
         const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
         const listFetch = listDocuments(doc.backboard_assistant_id)
           .then((docs) => docs.find((d) => d.document_id === doc.backboard_document_id)?.summary ?? null)
           .catch(() => null);
         const summary = await Promise.race([listFetch, timeout]);
-        if (summary) backboard_details.summary = summary;
+        if (summary) {
+          backboard_details.summary = summary;
+          // Cache it so we never need listDocuments for this doc again
+          await supabaseAdmin
+            .from('documents')
+            .update({ backboard_summary: summary })
+            .eq('id', id);
+        }
       }
 
     } catch (e) {
       console.error('Failed to fetch Backboard details:', e);
-      // Non-fatal: continue with null backboard data
+      // Non-fatal: if we have a cached summary, still return it
+      if (doc.backboard_summary) {
+        backboard_details = {
+          summary: doc.backboard_summary,
+          chunk_count: null,
+          total_tokens: null,
+          file_size_bytes: null,
+          status: doc.backboard_status ?? 'unknown',
+          status_message: null,
+        };
+      }
     }
   }
 
