@@ -3,12 +3,16 @@ import { Citation } from '@/types/citation';
 
 const SYSTEM_PROMPT = `You are a legal research assistant with access to a knowledge base of case law and statutes.
 
-When answering a question:
-1. Provide a clear, direct answer grounded ONLY in documents from your knowledge base.
-2. Include inline citations with full case names, reporter citations, and pin-cites.
-3. After your answer, output a JSON block fenced with \`\`\`citations ... \`\`\` containing an array of every authority you cited. Each object must have: raw (full citation string), caseName, reporter, year, pinCite (if any), type ("case"|"statute"|"regulation"), passage (the exact sentence or passage you relied on).
+IMPORTANT — always structure your response in this EXACT order:
 
-If you cannot find relevant authority in your knowledge base, say so clearly. Never fabricate citations.`;
+1. FIRST, output a JSON block fenced with \`\`\`citations
+[...]
+\`\`\`
+containing an array of every authority you will cite. Each object must have: raw (full citation string), caseName, reporter, year, pinCite (if any), type ("case"|"statute"|"regulation"), passage (one key sentence you relied on — keep it under 50 words).
+
+2. THEN, after the JSON block, write a concise answer (2–4 paragraphs max) grounded ONLY in your knowledge base. Include inline citations with full case names and reporter citations.
+
+The JSON block MUST come first, before your prose answer. Never fabricate citations. If you cannot find relevant authority, say so clearly.`;
 
 const MOCK_RESPONSES: Record<string, { answer: string; citations: Citation[] }> = {
   default: {
@@ -77,36 +81,113 @@ function pickMock(question: string): { answer: string; citations: Citation[] } {
   return MOCK_RESPONSES.default;
 }
 
+function mapCitation(c: { raw?: string; caseName?: string; reporter?: string; year?: string; pinCite?: string; type?: string; passage?: string }): Citation {
+  return {
+    id: crypto.randomUUID(),
+    raw: c.raw ?? '',
+    caseName: c.caseName ?? '',
+    reporter: c.reporter ?? '',
+    year: c.year ?? '',
+    pinCite: c.pinCite,
+    type: (c.type as Citation['type']) ?? 'case',
+    status: 'resolved' as const,
+    passage: c.passage,
+    source: c.raw ?? '',
+  };
+}
+
+/**
+ * Extract individual JSON objects from a possibly-truncated JSON array string.
+ * E.g. `[{"a":1},{"b":2},{"c":3` → [{"a":1},{"b":2}]
+ */
+function recoverPartialJsonArray(jsonStr: string): unknown[] {
+  const results: unknown[] = [];
+  // Match individual {...} blocks
+  const objRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+  let m;
+  while ((m = objRegex.exec(jsonStr)) !== null) {
+    try {
+      results.push(JSON.parse(m[0]));
+    } catch {
+      // skip malformed object
+    }
+  }
+  return results;
+}
+
 function parseCitationsFromResponse(raw: string): { answer: string; citations: Citation[] } {
-  // Try to find the fenced citations JSON block
-  const fenceMatch = raw.match(/```citations\s*([\s\S]*?)```/);
   let citations: Citation[] = [];
   let answer = raw;
 
-  if (fenceMatch) {
-    answer = raw.replace(/```citations[\s\S]*?```/, '').trim();
-    try {
-      const parsed = JSON.parse(fenceMatch[1]);
-      citations = (Array.isArray(parsed) ? parsed : []).map(
-        (c: { raw: string; caseName: string; reporter: string; year: string; pinCite?: string; type?: string; passage?: string }) => ({
-          id: crypto.randomUUID(),
-          raw: c.raw,
-          caseName: c.caseName,
-          reporter: c.reporter,
-          year: c.year,
-          pinCite: c.pinCite,
-          type: (c.type as Citation['type']) ?? 'case',
-          status: 'resolved' as const,
-          passage: c.passage,
-          source: c.raw,
-        })
-      );
-    } catch {
-      // If JSON parsing fails, try to extract from the answer text
+  // Try multiple fence patterns: ```citations, ``` citations, ```json etc.
+  const fencePatterns = [
+    /```citations\s*\n?([\s\S]*?)```/,
+    /```\s*citations\s*\n?([\s\S]*?)```/,
+    /```json\s*\n?([\s\S]*?)```/,
+    /```\s*\n?(\[[\s\S]*?\])\s*```/,
+  ];
+
+  for (const pattern of fencePatterns) {
+    const match = raw.match(pattern);
+    if (match) {
+      answer = raw.replace(match[0], '').trim();
+      try {
+        const parsed = JSON.parse(match[1].trim());
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        citations = arr.map(mapCitation);
+        break;
+      } catch {
+        // JSON.parse failed — try recovering individual objects from truncated array
+        const recovered = recoverPartialJsonArray(match[1]);
+        if (recovered.length > 0 && (recovered[0] as Record<string, unknown>).caseName) {
+          citations = recovered.map((o) => mapCitation(o as Record<string, string>));
+          break;
+        }
+      }
     }
   }
 
-  // If no citations were parsed from JSON, try regex on the answer
+  // Fallback: unclosed fence (truncated response) — ```citations\n[...  with no closing ```
+  if (citations.length === 0) {
+    const unclosedFence = raw.match(/```(?:citations|json)?\s*\n?([\s\S]+)/);
+    if (unclosedFence) {
+      const block = unclosedFence[1];
+      try {
+        const parsed = JSON.parse(block.trim());
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        citations = arr.map(mapCitation);
+        answer = raw.replace(unclosedFence[0], '').trim();
+      } catch {
+        const recovered = recoverPartialJsonArray(block);
+        if (recovered.length > 0 && (recovered[0] as Record<string, unknown>).caseName) {
+          citations = recovered.map((o) => mapCitation(o as Record<string, string>));
+          answer = raw.replace(unclosedFence[0], '').trim();
+        }
+      }
+    }
+  }
+
+  // Fallback: find any JSON array in the response
+  if (citations.length === 0) {
+    const jsonArrayMatch = raw.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+    if (jsonArrayMatch) {
+      try {
+        const parsed = JSON.parse(jsonArrayMatch[0]);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].caseName) {
+          citations = parsed.map(mapCitation);
+          answer = raw.replace(jsonArrayMatch[0], '').trim();
+        }
+      } catch {
+        const recovered = recoverPartialJsonArray(jsonArrayMatch[0]);
+        if (recovered.length > 0 && (recovered[0] as Record<string, unknown>).caseName) {
+          citations = recovered.map((o) => mapCitation(o as Record<string, string>));
+          answer = raw.replace(jsonArrayMatch[0], '').trim();
+        }
+      }
+    }
+  }
+
+  // Last resort: regex extraction from answer text
   if (citations.length === 0) {
     const citeRegex = /([A-Z][a-zA-Z']+(?:\s+(?:v|c|and)\s+[A-Z][a-zA-Z']+)+),?\s+(\[?\d{4}\]?\s+\d*\s*[A-Z.\s]+\d+)(?:,?\s+(at\s+(?:para(?:s)?\.?\s*)?\d[\d–-]*))?/g;
     let m;
@@ -127,6 +208,13 @@ function parseCitationsFromResponse(raw: string): { answer: string; citations: C
     }
   }
 
+  // Strip leftover JSON artifacts, code fences, and markdown separators from the answer
+  answer = answer
+    .replace(/```(?:citations|json)?\s*\n?[\s\S]*?(?:```|$)/g, '')  // remove any remaining fenced blocks
+    .replace(/\[\s*\{[\s\S]*?\}\s*[\s\S]*$/g, '')  // remove trailing JSON array remnants
+    .replace(/---\s*$/g, '')
+    .trim();
+
   return { answer, citations };
 }
 
@@ -143,8 +231,6 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
       body: JSON.stringify({
         name: 'Legal Research Assistant',
         system_prompt: SYSTEM_PROMPT,
-        llm_provider: 'anthropic',
-        llm_model_name: 'claude-sonnet-4-6',
       }),
     });
     const asst = await asstRes.json();
@@ -158,8 +244,17 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
   });
   const thread = await threadRes.json();
 
+  const form = new FormData();
+  form.append('content', question);
+  form.append('stream', 'false');
+  form.append('memory', 'auto');
+  form.append('llm_provider', 'anthropic');
+  form.append('model_name', 'claude-sonnet-4-6');
+
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
+    headers: { 'X-API-Key': apiKey },
+    body: form,
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({
       content: question,
@@ -168,7 +263,7 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
     }),
   });
   const msg = await msgRes.json();
-  const raw: string = msg.content ?? msg.response ?? msg.message ?? '';
+  const raw: string = msg.content ?? '';
 
   return parseCitationsFromResponse(raw);
 }

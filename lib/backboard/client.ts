@@ -4,6 +4,13 @@ const API_URL = process.env.BACKBOARD_API_URL!;
 const API_KEY = process.env.BACKBOARD_API_KEY!;
 
 async function backboardFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers: {
+      'X-API-Key': API_KEY,
+      ...options.headers,
+    },
+  });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
