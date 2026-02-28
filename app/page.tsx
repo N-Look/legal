@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -76,12 +77,13 @@ export default function LandingPage() {
                         <span className="font-bold text-lg tracking-tight">{"{{PROJECT_NAME}}"}</span>
                     </div>
 
-                    {/* Desktop Nav */}
                     <div className="hidden md:flex items-center gap-8 text-sm font-medium">
                         <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
                         <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
                         <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
-                        <Button size="sm" className="rounded-full">Get Started</Button>
+                        <Link href="/dashboard">
+                            <Button size="sm" className="rounded-full">Go to App</Button>
+                        </Link>
                     </div>
 
                     {/* Mobile Nav Toggle */}
@@ -99,7 +101,9 @@ export default function LandingPage() {
                         <a href="#how-it-works" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>How it works</a>
                         <a href="#features" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
                         <a href="#security" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Security</a>
-                        <Button className="w-full mt-2">Get Started</Button>
+                        <Link href="/dashboard" className="w-full mt-2 block" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button className="w-full">Go to App</Button>
+                        </Link>
                     </div>
                 )}
             </nav>
@@ -124,10 +128,12 @@ export default function LandingPage() {
                             {"{{PROJECT_NAME}}"} automatically extracts, resolves, and fetches legal citations from your drafts, generating a court-ready, fully-auditable package.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                            <Button size="lg" className="rounded-full h-12 px-8 text-base">
-                                Generate a Sample Pack
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
+                            <Link href="/dashboard" className="contents">
+                                <Button size="lg" className="rounded-full h-12 px-8 text-base">
+                                    Go to App
+                                    <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
+                            </Link>
                             <Button size="lg" variant="outline" className="rounded-full h-12 px-8 text-base">
                                 View Sample Output
                             </Button>
@@ -431,9 +437,11 @@ export default function LandingPage() {
                         Stop wasting hours on manual verification and start building defensible authority packs today.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Button size="lg" className="rounded-full h-12 px-8">
-                            Generate a Sample Pack
-                        </Button>
+                        <Link href="/dashboard" className="contents">
+                            <Button size="lg" className="rounded-full h-12 px-8">
+                                Go to App
+                            </Button>
+                        </Link>
                         <Button size="lg" variant="outline" className="rounded-full h-12 px-8">
                             Contact Sales
                         </Button>
