@@ -35,6 +35,7 @@ export interface Document {
   backboard_assistant_id: string | null;
   backboard_status: BackboardStatus;
   is_raw_text: boolean;
+  storage_path: string | null;
   pinned_to_matter: boolean;
   metadata: Record<string, unknown>;
   created_at: string;

@@ -61,10 +61,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  // Fetch document to get Backboard IDs
+  // Fetch document to get Backboard IDs and storage path
   const { data: doc, error: fetchError } = await supabaseAdmin
     .from('documents')
-    .select('backboard_assistant_id, backboard_document_id')
+    .select('backboard_assistant_id, backboard_document_id, storage_path')
     .eq('id', id)
     .single();
 
@@ -79,6 +79,15 @@ export async function DELETE(
     } catch (e) {
       console.error('Failed to delete from Backboard:', e);
       // Continue with Supabase deletion even if Backboard fails
+    }
+  }
+
+  // Delete from Supabase Storage (if file exists)
+  if (doc.storage_path) {
+    try {
+      await supabaseAdmin.storage.from('documents').remove([doc.storage_path]);
+    } catch (e) {
+      console.error('Failed to delete from Supabase Storage:', e);
     }
   }
 

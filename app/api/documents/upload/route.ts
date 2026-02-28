@@ -135,13 +135,40 @@ export async function POST(req: NextRequest) {
 
     if (sessionError) throw new Error(`Failed to create upload session: ${sessionError.message}`);
 
-    // 6. Upload to Backboard (if assistant exists)
+    // 6. Buffer file data upfront so both Storage and Backboard get a fresh copy
+    //    (Node.js FormData File streams can only be consumed once)
+    const sourceBlob = file || new Blob([rawText!], { type: 'text/plain' });
+    const fileBuffer = Buffer.from(await sourceBlob.arrayBuffer());
+
+    // 7. Upload to Supabase Storage (non-blocking — log errors and continue)
+    const storagePath = `${client.id}/${doc.id}/${filename}`;
+    try {
+      const { error: storageError } = await supabaseAdmin.storage
+        .from('documents')
+        .upload(storagePath, fileBuffer, {
+          contentType: mimeType,
+          upsert: false,
+        });
+
+      if (storageError) {
+        console.error('Supabase Storage upload error:', storageError);
+      } else {
+        await supabaseAdmin
+          .from('documents')
+          .update({ storage_path: storagePath })
+          .eq('id', doc.id);
+      }
+    } catch (e) {
+      console.error('Failed to upload to Supabase Storage:', e);
+    }
+
+    // 8. Upload to Backboard (if assistant exists)
     if (client.backboard_assistant_id) {
       try {
-        const uploadBlob = file || new Blob([rawText!], { type: 'text/plain' });
+        const backboardBlob = new Blob([fileBuffer], { type: mimeType });
         const bbDoc = await uploadDocument(
           client.backboard_assistant_id,
-          uploadBlob,
+          backboardBlob,
           filename
         );
 
