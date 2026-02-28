@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   FileText,
   Brain,
+  Download,
   Trash2,
   Loader2,
   Send,
@@ -31,25 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import dynamic from "next/dynamic";
 import { StatusBadge } from "./status-badge";
+import { PdfViewer } from "./pdf-viewer";
 import { useDocumentDetails } from "@/hooks/use-document-details";
 import { useDocumentChat, type ChatMessage } from "@/hooks/use-document-chat";
 import { useDocumentFile } from "@/hooks/use-document-file";
 import { TextViewer } from "./text-viewer";
 import type { BackboardStatus } from "@/lib/types/database";
-
-const PdfViewer = dynamic(
-  () => import("./pdf-viewer").then((mod) => mod.PdfViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="text-sm text-muted-foreground text-center py-8">
-        Loading PDF viewer...
-      </div>
-    ),
-  }
-);
 
 // ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -353,7 +342,7 @@ export function DocumentDetailModal({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton
-        className="max-w-6xl w-[95vw] h-[85vh] p-0 gap-0 flex flex-col overflow-hidden"
+        className="w-[95vw] sm:max-w-[95vw] h-[90vh] p-0 gap-0 flex flex-col overflow-hidden rounded-2xl"
       >
         {/* Header */}
         <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-border/50 shrink-0">
@@ -381,7 +370,7 @@ export function DocumentDetailModal({
         {/* Body: Two panes */}
         <div className="flex flex-1 min-h-0">
           {/* Left Pane: Document Viewer */}
-          <div className="w-[55%] border-r border-border/50 overflow-y-auto bg-muted/20 p-4">
+          <div className="w-[60%] border-r border-border/50 bg-muted/20 p-4 flex flex-col min-h-0">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -399,17 +388,19 @@ export function DocumentDetailModal({
                 </Button>
               </div>
             ) : details ? (
-              <DocumentViewer
-                filename={details.original_filename}
-                mimeType={details.mime_type}
-                fileUrl={file?.url ?? null}
-                fileLoading={fileLoading}
-              />
+              <div className="flex-1 min-h-0 h-full">
+                <DocumentViewer
+                  filename={details.original_filename}
+                  mimeType={details.mime_type}
+                  fileUrl={file?.url ?? null}
+                  fileLoading={fileLoading}
+                />
+              </div>
             ) : null}
           </div>
 
           {/* Right Pane: Tabs (Details / Chat) */}
-          <div className="w-[45%] flex flex-col min-h-0">
+          <div className="w-[40%] flex flex-col min-h-0">
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -441,6 +432,42 @@ export function DocumentDetailModal({
                   className="flex-1 overflow-y-auto px-5 py-4"
                 >
                   <div className="flex flex-col gap-6">
+                    {/* File Summary */}
+                    <div className="flex flex-col gap-3">
+                      <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground/80">
+                        <FileText className="w-4 h-4" />
+                        File
+                      </h4>
+                      <div className="flex flex-col gap-2 text-sm">
+                        <p className="text-xs text-muted-foreground truncate">
+                          {details.original_filename}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {details.file_size
+                            ? `${(details.file_size / 1024).toFixed(1)} KB`
+                            : "Unknown size"}
+                          {details.mime_type ? ` · ${details.mime_type}` : ""}
+                        </p>
+                      </div>
+                      {file?.url && (
+                        <a
+                          href={file.url}
+                          download={file.filename}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2 rounded-xl"
+                          >
+                            <Download className="w-4 h-4" />
+                            Download
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+
                     {/* AI Memory Section */}
                     {details.backboard_details && (
                       <div className="flex flex-col gap-3">
