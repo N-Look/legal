@@ -3,6 +3,7 @@ import type { Document as BBDocument } from 'backboard-sdk';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import type { MessageResponse } from 'backboard-sdk';
 import type { BackboardAssistant, BackboardThread, BackboardDocument, BackboardUploadResponse } from './types';
 
 const BASE_OPTIONS = {
@@ -100,4 +101,23 @@ export async function listDocuments(assistantId: string): Promise<BackboardDocum
 
 export async function deleteDocument(_assistantId: string, documentId: string): Promise<void> {
   await writeClient.deleteDocument(documentId);
+}
+
+export async function sendMessage(
+  threadId: string,
+  content: string,
+  options?: { llmProvider?: string; modelName?: string; memory?: string }
+): Promise<{ content: string; messageId: string }> {
+  const result = await writeClient.addMessage(threadId, {
+    content,
+    llmProvider: options?.llmProvider ?? 'anthropic',
+    modelName: options?.modelName ?? 'claude-sonnet-4-6',
+    memory: options?.memory ?? 'Readonly',
+    stream: false,
+  }) as MessageResponse;
+
+  return {
+    content: result.content,
+    messageId: result.messageId,
+  };
 }
