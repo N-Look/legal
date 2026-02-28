@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { getDocumentStatus } from '@/lib/backboard/client';
+import { getDocumentStatus, listDocuments } from '@/lib/backboard/client';
 
 export async function GET(
   _req: NextRequest,
@@ -39,6 +39,19 @@ export async function GET(
         status: bb.status,
         status_message: bb.status_message ?? null,
       };
+
+      // getDocumentStatus doesn't return summary — fetch from list endpoint
+      if (!backboard_details.summary && doc.backboard_assistant_id) {
+        try {
+          const docs = await listDocuments(doc.backboard_assistant_id);
+          const match = docs.find(d => d.document_id === doc.backboard_document_id);
+          if (match?.summary) {
+            backboard_details.summary = match.summary;
+          }
+        } catch (listErr) {
+          console.error('Failed to fetch summary from listDocuments:', listErr);
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch Backboard details:', e);
       // Non-fatal: continue with null backboard data
