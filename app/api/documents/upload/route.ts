@@ -10,10 +10,7 @@ export async function POST(req: NextRequest) {
   const rawText = formData.get('rawText') as string | null;
   const clientName = formData.get('clientName') as string;
   const matterName = formData.get('matterName') as string | null;
-  const matterNumber = formData.get('matterNumber') as string | null;
   const docType = (formData.get('docType') as DocType) || 'other';
-  const jurisdiction = formData.get('jurisdiction') as string | null;
-  const court = formData.get('court') as string | null;
 
   if (!clientName?.trim()) {
     return NextResponse.json({ error: 'Client name is required' }, { status: 400 });
@@ -90,10 +87,7 @@ export async function POST(req: NextRequest) {
           .insert({
             client_id: client.id,
             name: matterName.trim(),
-            matter_number: matterNumber || null,
             backboard_thread_id: backboardThreadId,
-            jurisdiction: jurisdiction || null,
-            court: court || null,
           })
           .select()
           .single();
@@ -125,7 +119,7 @@ export async function POST(req: NextRequest) {
         backboard_assistant_id: client.backboard_assistant_id,
         backboard_status: 'uploading',
         is_raw_text: isRawText,
-        metadata: { jurisdiction, court },
+        metadata: {},
       })
       .select()
       .single();

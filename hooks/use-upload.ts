@@ -22,21 +22,20 @@ export function useUpload(): UseUploadReturn {
 
   const stopPolling = useCallback(() => {
     if (pollingRef.current) {
-      clearInterval(pollingRef.current);
+      clearTimeout(pollingRef.current);
       pollingRef.current = null;
     }
   }, []);
 
   const pollStatus = useCallback((docId: string) => {
-    let pollCount = 0;
-    const maxPolls = 90; // 90 × 2s = 3 minutes max
+    let elapsed = 0;
+    const maxSeconds = 600; // 10 minutes
 
-    pollingRef.current = setInterval(async () => {
-      pollCount++;
-
-      if (pollCount > maxPolls) {
-        setPhase('error');
-        setError('Document processing timed out. It may still be indexing — check back later.');
+    const poll = async () => {
+      if (elapsed >= maxSeconds) {
+        setPhase('complete');
+        setProgress(90);
+        setError('Document uploaded — still indexing. It will appear in your library once ready.');
         stopPolling();
         return;
       }
@@ -48,22 +47,34 @@ export function useUpload(): UseUploadReturn {
         setStatus(data.status);
 
         if (data.status === 'processing') {
-          setProgress(66);
+          // Gradual progress: 50 → 90 over the polling window
+          setProgress(Math.min(50 + Math.floor((elapsed / maxSeconds) * 40), 90));
         }
 
         if (data.status === 'indexed') {
           setProgress(100);
           setPhase('complete');
           stopPolling();
+          return;
         } else if (data.status === 'error') {
           setPhase('error');
           setError('Document processing failed');
           stopPolling();
+          return;
         }
       } catch {
         // Continue polling on network errors
       }
-    }, 2000);
+
+      // Back off: 2s for first minute, then 5s
+      const interval = elapsed < 60 ? 2000 : 5000;
+      elapsed += interval / 1000;
+      pollingRef.current = setTimeout(poll, interval);
+    };
+
+    // Start first poll after 2s
+    elapsed += 2;
+    pollingRef.current = setTimeout(poll, 2000);
   }, [stopPolling]);
 
   const upload = useCallback(async (data: UploadFormData) => {
@@ -95,10 +106,7 @@ export function useUpload(): UseUploadReturn {
       }
       formData.append('clientName', data.clientName);
       if (data.matterName) formData.append('matterName', data.matterName);
-      if (data.matterNumber) formData.append('matterNumber', data.matterNumber);
       formData.append('docType', data.docType);
-      if (data.jurisdiction) formData.append('jurisdiction', data.jurisdiction);
-      if (data.court) formData.append('court', data.court);
 
       const res = await fetch('/api/documents/upload', {
         method: 'POST',

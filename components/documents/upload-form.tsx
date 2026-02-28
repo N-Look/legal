@@ -18,7 +18,7 @@ import { UploadProgress } from "./upload-progress";
 import { useUploadContext } from "@/contexts/upload-context";
 import { useClients, useMatters } from "@/hooks/use-clients-matters";
 import type { DocType } from "@/lib/types/database";
-import { FileText, Type } from "lucide-react";
+import { FileText, Type, Plus } from "lucide-react";
 
 const DOC_TYPES: { value: DocType; label: string }[] = [
   { value: "brief", label: "Brief" },
@@ -29,34 +29,51 @@ const DOC_TYPES: { value: DocType; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
+const NEW_MATTER_VALUE = "__new__";
+const NEW_CLIENT_VALUE = "__new_client__";
+
 export function UploadForm() {
   const [mode, setMode] = React.useState<"file" | "text">("file");
   const [file, setFile] = React.useState<File | null>(null);
   const [rawText, setRawText] = React.useState("");
-  const [clientName, setClientName] = React.useState("");
-  const [matterName, setMatterName] = React.useState("");
-  const [matterNumber, setMatterNumber] = React.useState("");
+  const [clientId, setClientId] = React.useState<string>("");
+  const [newClientName, setNewClientName] = React.useState("");
+  const [matterId, setMatterId] = React.useState<string>("");
+  const [newMatterName, setNewMatterName] = React.useState("");
   const [docType, setDocType] = React.useState<DocType>("other");
-  const [jurisdiction, setJurisdiction] = React.useState("");
-  const [court, setCourt] = React.useState("");
 
   const { clients } = useClients();
-  const selectedClient = clients.find(c => c.name === clientName);
+  const selectedClient = clients.find((c) => c.id === clientId);
   const { matters } = useMatters(selectedClient?.id);
 
   const { phase, progress, error, upload, reset } = useUploadContext();
+
+  const isCreatingNewClient = clientId === NEW_CLIENT_VALUE;
+
+  const resolvedClientName = isCreatingNewClient
+    ? newClientName
+    : selectedClient?.name || "";
+
+  // Reset matter selection when client changes
+  React.useEffect(() => {
+    setMatterId("");
+    setNewMatterName("");
+  }, [clientId]);
+
+  const isCreatingNewMatter = matterId === NEW_MATTER_VALUE;
+
+  const resolvedMatterName = isCreatingNewMatter
+    ? newMatterName
+    : matters.find((m) => m.id === matterId)?.name;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await upload({
       file: mode === "file" ? file ?? undefined : undefined,
       rawText: mode === "text" ? rawText : undefined,
-      clientName,
-      matterName: matterName || undefined,
-      matterNumber: matterNumber || undefined,
+      clientName: resolvedClientName,
+      matterName: resolvedMatterName || undefined,
       docType,
-      jurisdiction: jurisdiction || undefined,
-      court: court || undefined,
     });
   };
 
@@ -64,15 +81,15 @@ export function UploadForm() {
     reset();
     setFile(null);
     setRawText("");
-    setClientName("");
-    setMatterName("");
-    setMatterNumber("");
+    setClientId("");
+    setNewClientName("");
+    setMatterId("");
+    setNewMatterName("");
     setDocType("other");
-    setJurisdiction("");
-    setCourt("");
   };
 
-  const isSubmitting = phase !== "idle" && phase !== "error" && phase !== "complete";
+  const isSubmitting =
+    phase !== "idle" && phase !== "error" && phase !== "complete";
 
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-8">
@@ -86,7 +103,12 @@ export function UploadForm() {
       </div>
 
       {phase !== "idle" && (
-        <UploadProgress phase={phase} progress={progress} error={error} onReset={handleReset} />
+        <UploadProgress
+          phase={phase}
+          progress={progress}
+          error={error}
+          onReset={handleReset}
+        />
       )}
 
       {(phase === "idle" || phase === "error") && (
@@ -98,9 +120,10 @@ export function UploadForm() {
                 <button
                   type="button"
                   onClick={() => setMode("file")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    mode === "file" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "file"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   <FileText className="w-4 h-4" />
                   File
@@ -108,9 +131,10 @@ export function UploadForm() {
                 <button
                   type="button"
                   onClick={() => setMode("text")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    mode === "text" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${mode === "text"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                    }`}
                 >
                   <Type className="w-4 h-4" />
                   Text
@@ -125,62 +149,70 @@ export function UploadForm() {
               )}
 
               {/* Metadata Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="clientName" className="text-sm font-medium">
-                    Client *
-                  </Label>
-                  <Input
-                    id="clientName"
-                    placeholder="e.g. Acme Corp"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    list="client-suggestions"
-                    required
-                    className="rounded-xl"
-                  />
-                  <datalist id="client-suggestions">
-                    {clients.map((c) => (
-                      <option key={c.id} value={c.name} />
-                    ))}
-                  </datalist>
+                  <Label className="text-sm font-medium">Client *</Label>
+                  <Select
+                    value={clientId}
+                    onValueChange={setClientId}
+                  >
+                    <SelectTrigger className="rounded-xl w-full">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={NEW_CLIENT_VALUE}>
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5" />
+                          Create new client
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="matterName" className="text-sm font-medium">
-                    Matter
-                  </Label>
-                  <Input
-                    id="matterName"
-                    placeholder="e.g. Smith v. Jones"
-                    value={matterName}
-                    onChange={(e) => setMatterName(e.target.value)}
-                    list="matter-suggestions"
-                    className="rounded-xl"
-                  />
-                  <datalist id="matter-suggestions">
-                    {matters.map((m) => (
-                      <option key={m.id} value={m.name} />
-                    ))}
-                  </datalist>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="matterNumber" className="text-sm font-medium">
-                    Matter Number
-                  </Label>
-                  <Input
-                    id="matterNumber"
-                    placeholder="e.g. 2024-001"
-                    value={matterNumber}
-                    onChange={(e) => setMatterNumber(e.target.value)}
-                    className="rounded-xl"
-                  />
+                  <Label className="text-sm font-medium">Matter</Label>
+                  <Select
+                    value={matterId}
+                    onValueChange={setMatterId}
+                    disabled={!selectedClient}
+                  >
+                    <SelectTrigger className="rounded-xl w-full">
+                      <SelectValue
+                        placeholder={
+                          selectedClient
+                            ? "Select a matter"
+                            : "Select a client first"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {matters.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value={NEW_MATTER_VALUE}>
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="w-3.5 h-3.5" />
+                          Create new matter
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <Label className="text-sm font-medium">Document Type</Label>
-                  <Select value={docType} onValueChange={(v) => setDocType(v as DocType)}>
+                  <Select
+                    value={docType}
+                    onValueChange={(v) => setDocType(v as DocType)}
+                  >
                     <SelectTrigger className="rounded-xl w-full">
                       <SelectValue />
                     </SelectTrigger>
@@ -194,37 +226,56 @@ export function UploadForm() {
                   </Select>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="jurisdiction" className="text-sm font-medium">
-                    Jurisdiction
-                  </Label>
-                  <Input
-                    id="jurisdiction"
-                    placeholder="e.g. California"
-                    value={jurisdiction}
-                    onChange={(e) => setJurisdiction(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
+                {isCreatingNewClient && (
+                  <div className="flex flex-col gap-2 md:col-span-3">
+                    <Label
+                      htmlFor="newClientName"
+                      className="text-sm font-medium"
+                    >
+                      New Client Name *
+                    </Label>
+                    <Input
+                      id="newClientName"
+                      placeholder="e.g. Acme Corp"
+                      value={newClientName}
+                      onChange={(e) => setNewClientName(e.target.value)}
+                      required
+                      autoFocus
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="court" className="text-sm font-medium">
-                    Court
-                  </Label>
-                  <Input
-                    id="court"
-                    placeholder="e.g. 9th Circuit"
-                    value={court}
-                    onChange={(e) => setCourt(e.target.value)}
-                    className="rounded-xl"
-                  />
-                </div>
+                {isCreatingNewMatter && (
+                  <div className="flex flex-col gap-2 md:col-span-3">
+                    <Label
+                      htmlFor="newMatterName"
+                      className="text-sm font-medium"
+                    >
+                      New Matter Name *
+                    </Label>
+                    <Input
+                      id="newMatterName"
+                      placeholder="e.g. Smith v. Jones"
+                      value={newMatterName}
+                      onChange={(e) => setNewMatterName(e.target.value)}
+                      required
+                      autoFocus
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
               </div>
 
               <Button
                 type="submit"
                 size="lg"
-                disabled={isSubmitting || (!file && !rawText.trim()) || !clientName.trim()}
+                disabled={
+                  isSubmitting ||
+                  (!file && !rawText.trim()) ||
+                  !resolvedClientName.trim() ||
+                  (isCreatingNewMatter && !newMatterName.trim())
+                }
                 className="rounded-xl font-semibold h-12 w-full"
               >
                 Upload & Index

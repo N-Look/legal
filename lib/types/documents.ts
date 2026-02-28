@@ -5,10 +5,7 @@ export interface UploadFormData {
   rawText?: string;
   clientName: string;
   matterName?: string;
-  matterNumber?: string;
   docType: DocType;
-  jurisdiction?: string;
-  court?: string;
 }
 
 export interface UploadResponse {
