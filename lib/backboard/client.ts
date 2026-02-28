@@ -1,64 +1,49 @@
+import { BackboardClient } from 'backboard-sdk';
+import type { Document as BBDocument } from 'backboard-sdk';
+import { writeFile, unlink } from 'fs/promises';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import type { BackboardAssistant, BackboardThread, BackboardDocument, BackboardUploadResponse } from './types';
 
-const API_URL = process.env.BACKBOARD_API_URL!;
-const API_KEY = process.env.BACKBOARD_API_KEY!;
+const BASE_OPTIONS = {
+  apiKey: process.env.BACKBOARD_API_KEY!,
+  baseUrl: process.env.BACKBOARD_API_URL,
+};
 
-async function backboardFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'X-API-Key': API_KEY,
-      ...options.headers,
-    },
-  });
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+// Short timeout for read-only polling (status checks, listings)
+const readClient = new BackboardClient({ ...BASE_OPTIONS, timeout: 5000 });
+// Longer timeout for mutations (create, upload, delete)
+const writeClient = new BackboardClient({ ...BASE_OPTIONS, timeout: 30000 });
 
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        'X-API-Key': API_KEY,
-        ...options.headers,
-      },
-    });
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'AbortError') {
-      throw new Error(`Backboard API timeout: ${path}`);
-    }
-    throw e;
-  } finally {
-    clearTimeout(timeout);
-  }
-
-  if (!res.ok) {
-    const error = await res.text().catch(() => 'Unknown error');
-    throw new Error(`Backboard API error (${res.status}): ${error}`);
-  }
-
-  if (res.status === 204 || res.headers.get('content-length') === '0') {
-    return undefined as T;
-  }
-
-  return res.json();
+function mapDocument(doc: BBDocument): BackboardDocument {
+  return {
+    document_id: doc.documentId,
+    filename: doc.filename,
+    status: doc.status as BackboardDocument['status'],
+    status_message: doc.statusMessage,
+    summary: doc.summary,
+    chunk_count: doc.chunkCount,
+    total_tokens: doc.totalTokens,
+    file_size_bytes: doc.fileSizeBytes,
+    created_at: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
+  };
 }
 
 export async function createAssistant(name: string): Promise<BackboardAssistant> {
-  return backboardFetch<BackboardAssistant>('/assistants', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  });
+  const result = await writeClient.createAssistant({ name });
+  return {
+    assistant_id: result.assistantId,
+    name: result.name,
+    created_at: result.createdAt instanceof Date ? result.createdAt.toISOString() : String(result.createdAt),
+  };
 }
 
 export async function createThread(assistantId: string): Promise<BackboardThread> {
-  return backboardFetch<BackboardThread>(`/assistants/${assistantId}/threads`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({}),
-  });
+  const result = await writeClient.createThread(assistantId);
+  return {
+    thread_id: result.threadId,
+    created_at: result.createdAt instanceof Date ? result.createdAt.toISOString() : String(result.createdAt ?? new Date()),
+  };
 }
 
 export async function uploadDocument(
@@ -66,27 +51,33 @@ export async function uploadDocument(
   file: File | Blob,
   filename: string
 ): Promise<BackboardUploadResponse> {
-  const formData = new FormData();
-  formData.append('file', file, filename);
+  // SDK requires a file path — write blob to a temp file then clean up
+  const tempPath = join(tmpdir(), `bb-${Date.now()}-${filename}`);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  await writeFile(tempPath, buffer);
 
-  return backboardFetch<BackboardUploadResponse>(`/assistants/${assistantId}/documents`, {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const result = await writeClient.uploadDocumentToAssistant(assistantId, tempPath);
+    return {
+      document_id: result.documentId,
+      filename: result.filename,
+      status: result.status,
+    };
+  } finally {
+    await unlink(tempPath).catch(() => {});
+  }
 }
 
-export async function getDocumentStatus(
-  documentId: string
-): Promise<BackboardDocument> {
-  return backboardFetch<BackboardDocument>(`/documents/${documentId}/status`);
+export async function getDocumentStatus(documentId: string): Promise<BackboardDocument> {
+  const result = await readClient.getDocumentStatus(documentId);
+  return mapDocument(result);
 }
 
 export async function listDocuments(assistantId: string): Promise<BackboardDocument[]> {
-  return backboardFetch<BackboardDocument[]>(`/assistants/${assistantId}/documents`);
+  const results = await readClient.listAssistantDocuments(assistantId);
+  return results.map(mapDocument);
 }
 
-export async function deleteDocument(assistantId: string, documentId: string): Promise<void> {
-  await backboardFetch<void>(`/assistants/${assistantId}/documents/${documentId}`, {
-    method: 'DELETE',
-  });
+export async function deleteDocument(_assistantId: string, documentId: string): Promise<void> {
+  await writeClient.deleteDocument(documentId);
 }

@@ -13,17 +13,78 @@ import {
     Home,
     Scale,
     Library,
-    Brain
+    Brain,
+    Loader2,
+    CheckCircle2,
+    AlertCircle,
+    X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UploadProvider, useUploadContext } from "@/contexts/upload-context";
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+function UploadStatusPill() {
+    const { phase, progress, filename, reset } = useUploadContext();
+
+    if (phase === "idle") return null;
+
+    const isActive = phase !== "complete" && phase !== "error";
+
+    return (
+        <div className={`mx-2 mt-2 rounded-2xl border px-4 py-3 text-xs flex flex-col gap-2 transition-colors ${
+            phase === "complete"
+                ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30"
+                : phase === "error"
+                ? "border-destructive/30 bg-destructive/5"
+                : "border-border/60 bg-background"
+        }`}>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                    {phase === "complete" ? (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    ) : phase === "error" ? (
+                        <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                    ) : (
+                        <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
+                    )}
+                    <span className="font-medium truncate text-foreground/80">
+                        {phase === "complete"
+                            ? "Indexed"
+                            : phase === "error"
+                            ? "Failed"
+                            : phase === "processing"
+                            ? "Indexing…"
+                            : "Uploading…"}
+                    </span>
+                </div>
+                {!isActive && (
+                    <button
+                        onClick={reset}
+                        className="text-muted-foreground hover:text-foreground shrink-0"
+                    >
+                        <X className="w-3 h-3" />
+                    </button>
+                )}
+            </div>
+
+            {filename && (
+                <span className="text-muted-foreground truncate">{filename}</span>
+            )}
+
+            {isActive && (
+                <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+                    <div
+                        className="h-full rounded-full bg-primary transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+            )}
+        </div>
+    );
+}
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     const isHome = pathname === "/dashboard";
@@ -33,9 +94,9 @@ export default function DashboardLayout({
 
     return (
         <div className="h-screen bg-background font-sans selection:bg-primary/20 flex overflow-hidden">
-            {/* Left Sidebar - Entire column light grey */}
+            {/* Left Sidebar */}
             <aside className="w-72 bg-muted/30 border-r border-border/50 flex flex-col shrink-0 overflow-y-auto">
-                {/* Logo Area (replaces top left header) */}
+                {/* Logo Area */}
                 <div className="h-16 flex items-center px-8 border-b border-border/50 shrink-0 bg-background/50">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
@@ -140,6 +201,9 @@ export default function DashboardLayout({
                             <span className="text-[15px]">Court</span>
                         </Button>
                     </nav>
+
+                    {/* Upload status pill */}
+                    <UploadStatusPill />
                 </div>
             </aside>
 
@@ -171,5 +235,17 @@ export default function DashboardLayout({
                 </main>
             </div>
         </div>
+    );
+}
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <UploadProvider>
+            <DashboardLayoutInner>{children}</DashboardLayoutInner>
+        </UploadProvider>
     );
 }

@@ -15,7 +15,7 @@ import {
 import { UploadDropzone } from "./upload-dropzone";
 import { RawTextInput } from "./raw-text-input";
 import { UploadProgress } from "./upload-progress";
-import { useUpload } from "@/hooks/use-upload";
+import { useUploadContext } from "@/contexts/upload-context";
 import { useClients, useMatters } from "@/hooks/use-clients-matters";
 import type { DocType } from "@/lib/types/database";
 import { FileText, Type } from "lucide-react";
@@ -44,7 +44,7 @@ export function UploadForm() {
   const selectedClient = clients.find(c => c.name === clientName);
   const { matters } = useMatters(selectedClient?.id);
 
-  const { phase, progress, error, upload, reset } = useUpload();
+  const { phase, progress, error, upload, reset } = useUploadContext();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
