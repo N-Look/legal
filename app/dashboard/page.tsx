@@ -35,6 +35,7 @@ export default function DashboardPage() {
     const [step, setStep] = React.useState<Step>("idle");
     const [answer, setAnswer] = React.useState("");
     const [citations, setCitations] = React.useState<Citation[]>([]);
+    const [error, setError] = React.useState("");
     const [binder, setBinder] = React.useState<Citation[]>(DEFAULT_BINDER);
     const [matterName] = React.useState("Jones v. Smith");
     const [showSummary, setShowSummary] = React.useState(false);
@@ -45,6 +46,7 @@ export default function DashboardPage() {
         setStep("searching");
         setAnswer("");
         setCitations([]);
+        setError("");
 
         try {
             const res = await fetch("/api/citations/query", {
@@ -53,10 +55,16 @@ export default function DashboardPage() {
                 body: JSON.stringify({ question: query }),
             });
             const data = await res.json();
+            if (!res.ok) {
+                setError(data.error ?? `Request failed (${res.status})`);
+                setStep("idle");
+                return;
+            }
             setAnswer(data.answer ?? "");
             setCitations(data.citations ?? []);
             setStep("results");
-        } catch {
+        } catch (err) {
+            setError("Network error — could not reach the server.");
             setStep("idle");
         }
     }
@@ -111,6 +119,12 @@ export default function DashboardPage() {
                                 className="pl-12 bg-background shadow-sm border-border/50 h-12 text-base rounded-xl relative z-10"
                             />
                         </form>
+                        {error && (
+                            <div className="flex items-center text-xs font-medium text-destructive pt-1 px-1">
+                                <AlertCircle className="w-3.5 h-3.5 mr-2 shrink-0" />
+                                {error}
+                            </div>
+                        )}
                         <div className="flex items-center text-xs font-medium text-muted-foreground pt-1 px-1">
                             {step === "searching" ? (
                                 <>
