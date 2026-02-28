@@ -35,13 +35,11 @@ async function resolveWithBackboard(citations: Citation[]): Promise<Citation[]> 
   if (!asstId) {
     const asstRes = await fetch(`${baseUrl}/assistants`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({
         name: 'Legal Citation Resolver',
         system_prompt:
           'You are a Canadian legal authority. Given a legal citation, search your knowledge base for the case or statute. Return a JSON object with: status ("resolved"|"ambiguous"|"unresolved"), passage (relevant excerpt, max 2 sentences), source (canonical name + citation). If not found, set status to "unresolved" and leave passage empty.',
-        llm_provider: 'anthropic',
-        llm_model_name: 'claude-sonnet-4-6',
       }),
     });
     const asst = await asstRes.json();
@@ -49,10 +47,10 @@ async function resolveWithBackboard(citations: Citation[]): Promise<Citation[]> 
   }
 
   // Create one thread for the whole batch
-  const threadRes = await fetch(`${baseUrl}/threads`, {
+  const threadRes = await fetch(`${baseUrl}/assistants/${asstId}/threads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ assistant_id: asstId }),
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({}),
   });
   const thread = await threadRes.json();
 
@@ -60,17 +58,20 @@ async function resolveWithBackboard(citations: Citation[]): Promise<Citation[]> 
 
   for (const citation of citations) {
     try {
+      const form = new FormData();
+      form.append('content', `Find this citation in your knowledge base and return JSON: "${citation.raw}"`);
+      form.append('stream', 'false');
+      form.append('memory', 'auto');
+      form.append('llm_provider', 'anthropic');
+      form.append('model_name', 'claude-sonnet-4-6');
+
       const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          content: `Find this citation in your knowledge base and return JSON: "${citation.raw}"`,
-          memory: 'auto',
-          send_to_llm: true,
-        }),
+        headers: { 'X-API-Key': apiKey },
+        body: form,
       });
       const msg = await msgRes.json();
-      const raw: string = msg.content ?? msg.response ?? msg.message ?? '';
+      const raw: string = msg.content ?? '';
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {

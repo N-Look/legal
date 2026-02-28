@@ -58,7 +58,7 @@ async function uploadToBackboard(
 
   const res = await fetch(`${baseUrl}/assistants/${assistantId}/documents`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: { 'X-API-Key': apiKey },
     body: form,
   });
 

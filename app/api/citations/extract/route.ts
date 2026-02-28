@@ -43,46 +43,48 @@ async function extractWithBackboard(text: string): Promise<Citation[]> {
   const baseUrl = 'https://app.backboard.io/api';
 
   // Create or reuse assistant
-  let asst: { assistant_id: string };
+  let asstId: string;
   if (assistantId) {
-    asst = { assistant_id: assistantId };
+    asstId = assistantId;
   } else {
     const asstRes = await fetch(`${baseUrl}/assistants`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
       body: JSON.stringify({
         name: 'Legal Citation Extractor',
         system_prompt:
           'You are an expert Canadian legal citation extractor. When given legal text, extract every legal citation and return ONLY a valid JSON array. Each object must have: raw (full citation string), caseName, reporter, year, pinCite (optional, e.g. "at para 42"), type ("case"|"statute"|"regulation"|"exhibit"). Do not include any text outside the JSON array.',
-        llm_provider: 'anthropic',
-        llm_model_name: 'claude-sonnet-4-6',
       }),
     });
-    asst = await asstRes.json();
+    const asst = await asstRes.json();
+    asstId = asst.assistant_id;
   }
 
   // Create thread
-  const threadRes = await fetch(`${baseUrl}/threads`, {
+  const threadRes = await fetch(`${baseUrl}/assistants/${asstId}/threads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ assistant_id: asst.assistant_id }),
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({}),
   });
   const thread = await threadRes.json();
 
   // Send message
+  const form = new FormData();
+  form.append('content', `Extract all legal citations from this text:\n\n${text}`);
+  form.append('stream', 'false');
+  form.append('memory', 'off');
+  form.append('llm_provider', 'anthropic');
+  form.append('model_name', 'claude-sonnet-4-6');
+
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      content: `Extract all legal citations from this text:\n\n${text}`,
-      memory: 'off',
-      send_to_llm: true,
-    }),
+    headers: { 'X-API-Key': apiKey },
+    body: form,
   });
   const msg = await msgRes.json();
 
   // Parse the JSON from the assistant reply
-  const raw: string = msg.content ?? msg.response ?? msg.message ?? '';
+  const raw: string = msg.content ?? '';
   const jsonMatch = raw.match(/\[[\s\S]*\]/);
   if (!jsonMatch) return getMockCitations(text);
 

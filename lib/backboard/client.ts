@@ -7,7 +7,7 @@ async function backboardFetch<T>(path: string, options: RequestInit = {}): Promi
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
-      'Authorization': `Bearer ${API_KEY}`,
+      'X-API-Key': API_KEY,
       ...options.headers,
     },
   });

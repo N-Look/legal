@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { fetchRssCases } from '@/lib/canlii/rss';
 
 interface CaseEntry {
   databaseId: string;
@@ -9,7 +10,7 @@ interface CaseEntry {
   decisionDate?: string;
 }
 
-async function fetchAllCases(databaseId: string, canliiApiKey: string): Promise<CaseEntry[]> {
+async function fetchAllCasesFromApi(databaseId: string, canliiApiKey: string): Promise<CaseEntry[]> {
   const all: CaseEntry[] = [];
   let offset = 0;
   const resultCount = 100;
@@ -33,7 +34,7 @@ async function fetchAllCases(databaseId: string, canliiApiKey: string): Promise<
     all.push(...cases);
     if (cases.length < resultCount) break;
     offset += resultCount;
-    if (all.length > 5000) break; // safety cap per database
+    if (all.length > 5000) break;
   }
 
   return all;
@@ -79,7 +80,7 @@ async function uploadToBackboard(
 
   await fetch(`${baseUrl}/assistants/${assistantId}/documents`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: { 'X-API-Key': apiKey },
     body: form,
   });
 }
@@ -88,12 +89,6 @@ function encode(data: object): string {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
-// Mock cases for when API keys are not set
-const MOCK_BULK: CaseEntry[] = [
-  { databaseId: 'csc-scc', caseId: 'mock1', title: 'R v Oakes', citation: '[1986] 1 SCR 103', url: 'https://canlii.org/en/ca/scc/doc/1986/1986canlii46/1986canlii46.html' },
-  { databaseId: 'csc-scc', caseId: 'mock2', title: 'Donoghue v Stevenson', citation: '[1932] AC 562', url: 'https://canlii.org/en/ca/scc/doc/1932/1932canlii1/1932canlii1.html' },
-  { databaseId: 'csc-scc', caseId: 'mock3', title: 'Baker v Canada (MCI)', citation: '[1999] 2 SCR 817', url: 'https://canlii.org/en/ca/scc/doc/1999/1999canlii699/1999canlii699.html' },
-];
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -122,16 +117,18 @@ export async function GET(req: NextRequest) {
 
         if (canliiKey) {
           try {
-            cases = await fetchAllCases(dbId, canliiKey);
+            cases = await fetchAllCasesFromApi(dbId, canliiKey);
           } catch {
-            enc({ type: 'error', databaseId: dbId, message: 'Failed to fetch from CanLII' });
+            enc({ type: 'error', databaseId: dbId, message: 'Failed to fetch from CanLII API' });
             continue;
           }
         } else {
-          // Mock mode — use a small set
-          cases = MOCK_BULK.filter((c) => c.databaseId === dbId).length > 0
-            ? MOCK_BULK.filter((c) => c.databaseId === dbId)
-            : MOCK_BULK.slice(0, 3).map((c) => ({ ...c, databaseId: dbId }));
+          // No CanLII API key — use public RSS feed
+          cases = await fetchRssCases(dbId);
+          if (cases.length === 0) {
+            enc({ type: 'error', databaseId: dbId, message: 'No cases found via RSS for this court' });
+            continue;
+          }
         }
 
         enc({ type: 'database_total', databaseId: dbId, total: cases.length });
