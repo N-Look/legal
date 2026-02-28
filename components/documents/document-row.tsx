@@ -8,17 +8,22 @@ import type { Document } from "@/lib/types/database";
 
 interface DocumentRowProps {
   document: Document & { clients?: { name: string }; matters?: { name: string } | null };
+  isSelected?: boolean;
   onPin: (id: string, pinned: boolean) => void;
   onSelect: (doc: Document) => void;
 }
 
-export function DocumentRow({ document, onPin, onSelect }: DocumentRowProps) {
+export function DocumentRow({ document, isSelected, onPin, onSelect }: DocumentRowProps) {
   const timeAgo = getTimeAgo(document.created_at);
 
   return (
     <div
       onClick={() => onSelect(document)}
-      className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 cursor-pointer transition-colors group border border-transparent hover:border-border/40"
+      className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-colors group border ${
+        isSelected
+          ? "bg-primary/5 border-primary/20"
+          : "border-transparent hover:bg-muted/30 hover:border-border/40"
+      }`}
     >
       <div className="p-2.5 bg-primary/10 rounded-xl shrink-0">
         <FileText className="w-5 h-5 text-primary" />

@@ -30,6 +30,8 @@ export async function GET(
     try {
       const bbDoc = await getDocumentStatus(doc.backboard_document_id);
 
+      console.log(`[status] doc=${id} backboard_status=${bbDoc.status}`);
+
       const newStatus = bbDoc.status === 'indexed' ? 'indexed'
         : bbDoc.status === 'error' ? 'error'
         : bbDoc.status === 'processing' ? 'processing'
@@ -55,13 +57,25 @@ export async function GET(
         headers: { 'Cache-Control': 'no-store' },
       });
     } catch (e) {
-      console.error('Failed to poll Backboard status:', e);
-      return NextResponse.json({ status: doc.backboard_status }, {
-        headers: { 'Cache-Control': 'no-store' },
-      });
+      // Surface the real error so the frontend can stop polling instead of looping forever
+      const message = e instanceof Error ? e.message : String(e);
+      console.error(`[status] Backboard check failed for doc=${id} (backboard_id=${doc.backboard_document_id}): ${message}`);
+
+      // Mark as error in DB so future polls return immediately without hitting Backboard
+      await supabaseAdmin
+        .from('documents')
+        .update({ backboard_status: 'error' })
+        .eq('id', id);
+
+      return NextResponse.json(
+        { status: 'error', error: `Indexing failed: ${message}` },
+        { headers: { 'Cache-Control': 'no-store' } }
+      );
     }
   }
 
+  // No backboard_document_id — upload didn't reach Backboard
+  console.warn(`[status] doc=${id} has no backboard_document_id (db_status=${doc.backboard_status})`);
   return NextResponse.json({ status: doc.backboard_status }, {
     headers: { 'Cache-Control': 'no-store' },
   });

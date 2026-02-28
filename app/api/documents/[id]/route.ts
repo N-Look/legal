@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { deleteDocument as deleteBackboardDocument } from '@/lib/backboard/client';
+import { deleteDocument as deleteBackboardDocument, getDocumentStatus } from '@/lib/backboard/client';
 
 export async function GET(
   _req: NextRequest,
@@ -18,7 +18,24 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  // Fetch Backboard memory details if document is indexed
+  let memory = null;
+  if (data.backboard_document_id && process.env.BACKBOARD_API_KEY) {
+    try {
+      const bbDoc = await getDocumentStatus(data.backboard_document_id);
+      memory = {
+        summary: bbDoc.summary ?? null,
+        chunk_count: bbDoc.chunk_count ?? null,
+        total_tokens: bbDoc.total_tokens ?? null,
+        file_size_bytes: bbDoc.file_size_bytes ?? null,
+        status: bbDoc.status,
+      };
+    } catch (e) {
+      console.error(`[document detail] Failed to fetch Backboard details for ${id}:`, e);
+    }
+  }
+
+  return NextResponse.json({ ...data, memory });
 }
 
 export async function PATCH(

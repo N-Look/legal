@@ -89,6 +89,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const isHome = pathname === "/dashboard";
     const isUpload = pathname === "/dashboard/upload";
     const isLibrary = pathname === "/dashboard/library";
+    const isMap = pathname === "/dashboard/map";
 
     return (
         <div className="h-screen bg-background font-sans selection:bg-primary/20 flex overflow-hidden">
@@ -172,9 +173,21 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                             </Link>
                         </Button>
 
-                        <Button variant="ghost" className="justify-start font-medium text-muted-foreground hover:text-foreground rounded-full h-12 hover:bg-muted/50 px-5">
-                            <MapIcon className="w-5 h-5 mr-4 shrink-0" />
-                            <span className="text-[15px]">Map</span>
+                        <Button
+                            asChild
+                            variant={isMap ? "outline" : "ghost"}
+                            className={`justify-start font-medium rounded-full h-12 ${isMap ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
+                        >
+                            <Link href="/dashboard/map">
+                                {isMap ? (
+                                    <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center mr-4 shrink-0">
+                                        <MapIcon className="w-4 h-4 text-background" fill="currentColor" />
+                                    </div>
+                                ) : (
+                                    <MapIcon className="w-5 h-5 mr-4 shrink-0" />
+                                )}
+                                <span className="text-[15px]">Map</span>
+                            </Link>
                         </Button>
 
                         <Button variant="ghost" className="justify-start font-medium text-muted-foreground hover:text-foreground rounded-full h-12 hover:bg-muted/50 px-5">

@@ -29,13 +29,15 @@ export function useUpload(): UseUploadReturn {
 
   const pollStatus = useCallback((docId: string) => {
     let elapsed = 0;
-    const maxSeconds = 600; // 10 minutes
+    const maxSeconds = 180; // 3 minutes max
+    let attempt = 0;
+    let consecutiveErrors = 0;
 
     const poll = async () => {
       if (elapsed >= maxSeconds) {
         setPhase('complete');
         setProgress(90);
-        setError('Document uploaded — still indexing. It will appear in your library once ready.');
+        setError('Document uploaded — indexing is taking longer than expected. It will appear in your library once ready.');
         stopPolling();
         return;
       }
@@ -45,11 +47,10 @@ export function useUpload(): UseUploadReturn {
         const data = await res.json();
 
         setStatus(data.status);
+        consecutiveErrors = 0;
 
-        if (data.status === 'processing') {
-          // Gradual progress: 50 → 90 over the polling window
-          setProgress(Math.min(50 + Math.floor((elapsed / maxSeconds) * 40), 90));
-        }
+        // Gradual progress: 50 → 90
+        setProgress(Math.min(50 + Math.floor((elapsed / maxSeconds) * 40), 90));
 
         if (data.status === 'indexed') {
           setProgress(100);
@@ -58,23 +59,31 @@ export function useUpload(): UseUploadReturn {
           return;
         } else if (data.status === 'error') {
           setPhase('error');
-          setError('Document processing failed');
+          setError(data.error ?? 'Document processing failed. Check that your Backboard API key is valid.');
           stopPolling();
           return;
         }
       } catch {
-        // Continue polling on network errors
+        consecutiveErrors++;
+        // Give up after 5 consecutive network errors
+        if (consecutiveErrors >= 5) {
+          setPhase('error');
+          setError('Lost connection while checking indexing status.');
+          stopPolling();
+          return;
+        }
       }
 
-      // Back off: 2s for first minute, then 5s
-      const interval = elapsed < 60 ? 2000 : 5000;
+      // Exponential backoff: 5s → 10s → 20s → 30s (cap)
+      const interval = Math.min(5000 * Math.pow(1.5, attempt), 30000);
       elapsed += interval / 1000;
+      attempt++;
       pollingRef.current = setTimeout(poll, interval);
     };
 
-    // Start first poll after 2s
-    elapsed += 2;
-    pollingRef.current = setTimeout(poll, 2000);
+    // First poll after 5s (Backboard needs time to start processing)
+    elapsed += 5;
+    pollingRef.current = setTimeout(poll, 5000);
   }, [stopPolling]);
 
   const upload = useCallback(async (data: UploadFormData) => {
