@@ -28,7 +28,19 @@ export function useUpload(): UseUploadReturn {
   }, []);
 
   const pollStatus = useCallback((docId: string) => {
+    let pollCount = 0;
+    const maxPolls = 90; // 90 × 2s = 3 minutes max
+
     pollingRef.current = setInterval(async () => {
+      pollCount++;
+
+      if (pollCount > maxPolls) {
+        setPhase('error');
+        setError('Document processing timed out. It may still be indexing — check back later.');
+        stopPolling();
+        return;
+      }
+
       try {
         const res = await fetch(`/api/documents/${docId}/status`);
         const data = await res.json();

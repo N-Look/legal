@@ -255,6 +255,12 @@ async function queryBackboard(question: string): Promise<{ answer: string; citat
     method: 'POST',
     headers: { 'X-API-Key': apiKey },
     body: form,
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({
+      content: question,
+      memory: 'auto',
+      send_to_llm: true,
+    }),
   });
   const msg = await msgRes.json();
   const raw: string = msg.content ?? '';

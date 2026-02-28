@@ -12,7 +12,8 @@ import {
     Search,
     Home,
     Scale,
-    Library
+    Library,
+    Brain
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export default function DashboardLayout({
     const isHome = pathname === "/dashboard";
     const isUpload = pathname === "/dashboard/upload";
     const isLibrary = pathname === "/dashboard/library";
+    const isMemory = pathname === "/dashboard/memory";
 
     return (
         <div className="h-screen bg-background font-sans selection:bg-primary/20 flex overflow-hidden">
@@ -108,6 +110,23 @@ export default function DashboardLayout({
                                     <Library className="w-5 h-5 mr-4 shrink-0" />
                                 )}
                                 <span className="text-[15px]">Library</span>
+                            </Link>
+                        </Button>
+
+                        <Button
+                            asChild
+                            variant={isMemory ? "outline" : "ghost"}
+                            className={`justify-start font-medium rounded-full h-12 ${isMemory ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
+                        >
+                            <Link href="/dashboard/memory">
+                                {isMemory ? (
+                                    <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center mr-4 shrink-0">
+                                        <Brain className="w-4 h-4 text-background" fill="currentColor" />
+                                    </div>
+                                ) : (
+                                    <Brain className="w-5 h-5 mr-4 shrink-0" />
+                                )}
+                                <span className="text-[15px]">Memory</span>
                             </Link>
                         </Button>
 

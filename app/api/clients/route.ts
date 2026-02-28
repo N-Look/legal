@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   let backboardAssistantId: string | null = null;
   try {
     const assistant = await createAssistant(name.trim());
-    backboardAssistantId = assistant.id;
+    backboardAssistantId = assistant.assistant_id;
   } catch (e) {
     console.error('Failed to create Backboard assistant:', e);
   }

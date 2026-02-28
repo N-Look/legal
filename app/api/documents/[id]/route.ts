@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { deleteDocument as deleteBackboardDocument } from '@/lib/backboard/client';
 
 export async function GET(
   _req: NextRequest,
@@ -52,4 +53,44 @@ export async function PATCH(
   }
 
   return NextResponse.json(data);
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  // Fetch document to get Backboard IDs
+  const { data: doc, error: fetchError } = await supabaseAdmin
+    .from('documents')
+    .select('backboard_assistant_id, backboard_document_id')
+    .eq('id', id)
+    .single();
+
+  if (fetchError) {
+    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+  }
+
+  // Delete from Backboard first (if IDs exist)
+  if (doc.backboard_assistant_id && doc.backboard_document_id) {
+    try {
+      await deleteBackboardDocument(doc.backboard_assistant_id, doc.backboard_document_id);
+    } catch (e) {
+      console.error('Failed to delete from Backboard:', e);
+      // Continue with Supabase deletion even if Backboard fails
+    }
+  }
+
+  // Delete from Supabase (cascade handles upload_sessions)
+  const { error: deleteError } = await supabaseAdmin
+    .from('documents')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }
