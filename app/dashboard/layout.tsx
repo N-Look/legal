@@ -60,11 +60,12 @@ export default function DashboardLayout({
 
                     {/* Nav Menu */}
                     <nav className="flex flex-col gap-2 px-2">
-                        <Link href="/dashboard" passHref legacyBehavior>
-                            <Button
-                                variant={isHome ? "outline" : "ghost"}
-                                className={`justify-start font-medium rounded-full h-12 ${isHome ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
-                            >
+                        <Button
+                            asChild
+                            variant={isHome ? "outline" : "ghost"}
+                            className={`justify-start font-medium rounded-full h-12 ${isHome ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
+                        >
+                            <Link href="/dashboard">
                                 {isHome ? (
                                     <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center mr-4 shrink-0">
                                         <Home className="w-4 h-4 text-background" fill="currentColor" />
@@ -73,14 +74,15 @@ export default function DashboardLayout({
                                     <Home className="w-5 h-5 mr-4 shrink-0" />
                                 )}
                                 <span className="text-[15px]">Home</span>
-                            </Button>
-                        </Link>
+                            </Link>
+                        </Button>
 
-                        <Link href="/dashboard/upload" passHref legacyBehavior>
-                            <Button
-                                variant={isUpload ? "outline" : "ghost"}
-                                className={`justify-start font-medium rounded-full h-12 ${isUpload ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
-                            >
+                        <Button
+                            asChild
+                            variant={isUpload ? "outline" : "ghost"}
+                            className={`justify-start font-medium rounded-full h-12 ${isUpload ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
+                        >
+                            <Link href="/dashboard/upload">
                                 {isUpload ? (
                                     <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center mr-4 shrink-0">
                                         <Folder className="w-4 h-4 text-background" fill="currentColor" />
@@ -89,14 +91,15 @@ export default function DashboardLayout({
                                     <Folder className="w-5 h-5 mr-4 shrink-0" />
                                 )}
                                 <span className="text-[15px]">Upload</span>
-                            </Button>
-                        </Link>
+                            </Link>
+                        </Button>
 
-                        <Link href="/dashboard/library" passHref legacyBehavior>
-                            <Button
-                                variant={isLibrary ? "outline" : "ghost"}
-                                className={`justify-start font-medium rounded-full h-12 ${isLibrary ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
-                            >
+                        <Button
+                            asChild
+                            variant={isLibrary ? "outline" : "ghost"}
+                            className={`justify-start font-medium rounded-full h-12 ${isLibrary ? "shadow-sm bg-background/80 text-foreground border border-border/60 hover:bg-background" : "text-muted-foreground hover:text-foreground hover:bg-muted/50 px-5"}`}
+                        >
+                            <Link href="/dashboard/library">
                                 {isLibrary ? (
                                     <div className="w-7 h-7 rounded-full bg-foreground flex items-center justify-center mr-4 shrink-0">
                                         <Library className="w-4 h-4 text-background" fill="currentColor" />
@@ -105,8 +108,8 @@ export default function DashboardLayout({
                                     <Library className="w-5 h-5 mr-4 shrink-0" />
                                 )}
                                 <span className="text-[15px]">Library</span>
-                            </Button>
-                        </Link>
+                            </Link>
+                        </Button>
 
                         <Button variant="ghost" className="justify-start font-medium text-muted-foreground hover:text-foreground rounded-full h-12 hover:bg-muted/50 px-5">
                             <MapIcon className="w-5 h-5 mr-4 shrink-0" />
