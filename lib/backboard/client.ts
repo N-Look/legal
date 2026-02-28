@@ -88,7 +88,7 @@ export async function getDocumentStatus(documentId: string): Promise<BackboardDo
         err.message.includes('timed out') ||
         err.message.includes('abort');
       if (!isTransient) throw err;
-      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
     }
   }
   throw new Error('unreachable');

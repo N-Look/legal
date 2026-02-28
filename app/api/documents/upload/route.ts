@@ -100,8 +100,11 @@ export async function POST(req: NextRequest) {
 
     // 3. Determine file details
     const isRawText = !file;
-    const filename = file ? file.name : `raw-text-${Date.now()}.txt`;
     const originalFilename = file ? file.name : 'Pasted Text';
+    // Sanitize for storage: normalize unicode, strip non-ASCII, replace unsafe chars
+    const sanitizeForStorage = (name: string) =>
+      name.normalize('NFKD').replace(/[^\x00-\x7F]/g, '-').replace(/[^a-zA-Z0-9._\-]/g, '-').replace(/-{2,}/g, '-').replace(/^-|-$/g, '');
+    const filename = file ? sanitizeForStorage(file.name) : `raw-text-${Date.now()}.txt`;
     const fileSize = file ? file.size : new Blob([rawText!]).size;
     const mimeType = file ? file.type : 'text/plain';
 

@@ -83,11 +83,10 @@ export function UploadDropzone({ file, onFileSelect }: UploadDropzoneProps) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${
-          dragOver
+        className={`border-2 border-dashed rounded-2xl p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 ${dragOver
             ? "border-primary bg-primary/5"
             : "border-border/80 bg-muted/5 hover:bg-muted/20 hover:border-primary/40"
-        }`}
+          }`}
       >
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-5">
           <UploadCloud className="w-8 h-8 text-primary" />

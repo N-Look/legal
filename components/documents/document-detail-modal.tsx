@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { StatusBadge } from "./status-badge";
-import { PdfViewer } from "./pdf-viewer";
+import { PdfViewer, type PdfViewerHandle } from "./pdf-viewer";
 import { useDocumentDetails } from "@/hooks/use-document-details";
 import { useDocumentChat, type ChatMessage } from "@/hooks/use-document-chat";
 import { useDocumentFile } from "@/hooks/use-document-file";
@@ -102,17 +102,21 @@ function parseContent(
 
 // ─── Document Viewer (Left Pane) ────────────────────────────────────────────
 
+interface DocumentViewerProps {
+  filename: string;
+  mimeType: string | null;
+  fileUrl: string | null;
+  fileLoading: boolean;
+  highlightText?: string | null;
+}
+
 function DocumentViewer({
   filename,
   mimeType,
   fileUrl,
   fileLoading,
-}: {
-  filename: string;
-  mimeType: string | null;
-  fileUrl: string | null;
-  fileLoading: boolean;
-}) {
+  highlightText,
+}: DocumentViewerProps) {
   if (fileLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
@@ -123,7 +127,7 @@ function DocumentViewer({
   }
 
   if (fileUrl && mimeType?.startsWith("application/pdf")) {
-    return <PdfViewer url={fileUrl} />;
+    return <PdfViewer url={fileUrl} highlightText={highlightText} />;
   }
 
   if (fileUrl && mimeType?.startsWith("text/")) {
@@ -150,7 +154,7 @@ function DocumentViewer({
 
 // ─── Chat Message Bubble ────────────────────────────────────────────────────
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({ message, onQuoteClick }: { message: ChatMessage; onQuoteClick?: (quote: string) => void }) {
   const isUser = message.role === "user";
   const segments = isUser
     ? [{ type: "text" as const, content: message.content }]
@@ -161,20 +165,24 @@ function ChatBubble({ message }: { message: ChatMessage }) {
       className={`flex ${isUser ? "justify-end" : "justify-start"} mb-3`}
     >
       <div
-        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-md"
-            : "bg-muted/60 text-foreground rounded-bl-md"
-        }`}
+        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${isUser
+          ? "bg-primary text-primary-foreground rounded-br-md"
+          : "bg-muted/60 text-foreground rounded-bl-md"
+          }`}
       >
         {segments.map((seg, i) =>
           seg.type === "quote" ? (
             <blockquote
               key={i}
-              className="border-l-2 border-primary/50 pl-3 my-2 text-sm bg-primary/5 rounded-r-lg py-2 pr-3 italic cursor-pointer hover:bg-primary/10 transition-colors flex items-start gap-2"
+              className="border-l-2 border-primary/50 pl-3 my-2 text-sm bg-primary/5 rounded-r-lg py-2 pr-3 italic cursor-pointer hover:bg-primary/10 transition-colors flex items-start gap-2 group/quote"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuoteClick?.(seg.content);
+              }}
+              title="Click to jump to this text in the document"
             >
               <Quote className="w-3 h-3 mt-0.5 shrink-0 text-primary/60" />
-              <span>{seg.content}</span>
+              <span className="underline decoration-primary/30 underline-offset-2 group-hover/quote:decoration-primary/60 transition-colors">{seg.content}</span>
             </blockquote>
           ) : (
             <span key={i}>{seg.content}</span>
@@ -190,9 +198,11 @@ function ChatBubble({ message }: { message: ChatMessage }) {
 function ChatSection({
   documentId,
   backboardStatus,
+  onQuoteClick,
 }: {
   documentId: string;
   backboardStatus: BackboardStatus;
+  onQuoteClick?: (quote: string) => void;
 }) {
   const { messages, sending, error, sendMessage, reset } = useDocumentChat();
   const [input, setInput] = React.useState("");
@@ -248,7 +258,7 @@ function ChatSection({
           </div>
         )}
         {messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
+          <ChatBubble key={msg.id} message={msg} onQuoteClick={onQuoteClick} />
         ))}
         {sending && (
           <div className="flex justify-start mb-3">
@@ -311,6 +321,7 @@ export function DocumentDetailModal({
   } = useDocumentDetails();
 
   const { file, loading: fileLoading } = useDocumentFile(documentId);
+  const [highlightText, setHighlightText] = React.useState<string | null>(null);
 
   const isOpen = documentId !== null;
 
@@ -394,6 +405,7 @@ export function DocumentDetailModal({
                   mimeType={details.mime_type}
                   fileUrl={file?.url ?? null}
                   fileLoading={fileLoading}
+                  highlightText={highlightText}
                 />
               </div>
             ) : null}
@@ -615,6 +627,7 @@ export function DocumentDetailModal({
                   <ChatSection
                     documentId={details.id}
                     backboardStatus={details.backboard_status}
+                    onQuoteClick={(quote) => setHighlightText(quote)}
                   />
                 </TabsContent>
               </Tabs>

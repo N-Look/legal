@@ -40,18 +40,17 @@ export async function GET(
         status_message: bb.status_message ?? null,
       };
 
-      // getDocumentStatus doesn't return summary — fetch from list endpoint
+      // getDocumentStatus doesn't reliably return summary — fetch from list,
+      // but cap at 5 s so a slow Backboard response never blocks the page.
       if (!backboard_details.summary && doc.backboard_assistant_id) {
-        try {
-          const docs = await listDocuments(doc.backboard_assistant_id);
-          const match = docs.find(d => d.document_id === doc.backboard_document_id);
-          if (match?.summary) {
-            backboard_details.summary = match.summary;
-          }
-        } catch (listErr) {
-          console.error('Failed to fetch summary from listDocuments:', listErr);
-        }
+        const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
+        const listFetch = listDocuments(doc.backboard_assistant_id)
+          .then((docs) => docs.find((d) => d.document_id === doc.backboard_document_id)?.summary ?? null)
+          .catch(() => null);
+        const summary = await Promise.race([listFetch, timeout]);
+        if (summary) backboard_details.summary = summary;
       }
+
     } catch (e) {
       console.error('Failed to fetch Backboard details:', e);
       // Non-fatal: continue with null backboard data

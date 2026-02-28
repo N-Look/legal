@@ -129,3 +129,46 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── pdfjs text layer ──────────────────────────────────────────────────── */
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 0.3;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  z-index: 2;
+}
+
+.textLayer :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  transform-origin: 0% 0%;
+}
+
+.textLayer> :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  z-index: 2;
+  cursor: text;
+}
+
+/* ── Quote highlight pulse animation ──────────────────────────────────── */
+.pdf-quote-highlight {
+  animation: quote-highlight-pulse 1.5s ease-in-out 2;
+}
+
+@keyframes quote-highlight-pulse {
+
+  0%,
+  100% {
+    background-color: rgba(250, 204, 21, 0.45);
+  }
+
+  50% {
+    background-color: rgba(250, 204, 21, 0.75);
+  }
+}
