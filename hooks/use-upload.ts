@@ -74,16 +74,16 @@ export function useUpload(): UseUploadReturn {
         }
       }
 
-      // Exponential backoff: 5s → 10s → 20s → 30s (cap)
-      const interval = Math.min(5000 * Math.pow(1.5, attempt), 30000);
+      // Exponential backoff: 2s → 3s → 4.5s → ... → 15s (cap)
+      const interval = Math.min(2000 * Math.pow(1.5, attempt), 15000);
       elapsed += interval / 1000;
       attempt++;
       pollingRef.current = setTimeout(poll, interval);
     };
 
-    // First poll after 5s (Backboard needs time to start processing)
-    elapsed += 5;
-    pollingRef.current = setTimeout(poll, 5000);
+    // First poll after 2s
+    elapsed += 2;
+    pollingRef.current = setTimeout(poll, 2000);
   }, [stopPolling]);
 
   const upload = useCallback(async (data: UploadFormData) => {
