@@ -516,9 +516,7 @@ export default function LandingPage() {
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
-                        <Button size="lg" variant="outline" className="rounded-full h-12 px-8">
-                            Contact Sales
-                        </Button>
+
                     </div>
                 </div>
 
