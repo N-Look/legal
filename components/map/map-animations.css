@@ -1,0 +1,77 @@
+/* Node appearance animation */
+@keyframes nodeAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Subtle pulse for selected nodes */
+@keyframes dotPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
+  }
+}
+
+/* React Flow edge animation — slow, smooth flow */
+.react-flow__edge-path {
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+/* Animated edges — slower dash animation for elegant flow */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: edgeFlow 2s linear infinite;
+}
+
+@keyframes edgeFlow {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Edge hover — slightly brighten */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2 !important;
+  filter: brightness(0.8);
+}
+
+/* Smooth node dragging */
+.react-flow__node {
+  transition: box-shadow 0.2s ease;
+}
+
+.react-flow__node.dragging {
+  z-index: 100 !important;
+}
+
+/* Hide default selection box outline */
+.react-flow__node.selected {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Cleaner minimap if used */
+.react-flow__minimap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Connection line while drawing */
+.react-flow__connection-path {
+  stroke: rgba(148, 163, 184, 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
