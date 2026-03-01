@@ -68,6 +68,7 @@ export function UploadForm() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     await upload({
       file: mode === "file" ? file ?? undefined : undefined,
       rawText: mode === "text" ? rawText : undefined,
@@ -91,6 +92,8 @@ export function UploadForm() {
   const isSubmitting =
     phase !== "idle" && phase !== "error" && phase !== "complete";
 
+  const showForm = phase === "idle" || phase === "error";
+
   return (
     <div className="w-full max-w-3xl mx-auto flex flex-col gap-8">
       <div className="text-center">
@@ -102,6 +105,7 @@ export function UploadForm() {
         </p>
       </div>
 
+      {/* Upload progress */}
       {phase !== "idle" && (
         <UploadProgress
           phase={phase}
@@ -111,7 +115,7 @@ export function UploadForm() {
         />
       )}
 
-      {(phase === "idle" || phase === "error") && (
+      {showForm && (
         <Card className="shadow-sm border-border/80 rounded-[2rem] bg-background/50 overflow-hidden">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -278,7 +282,7 @@ export function UploadForm() {
                 }
                 className="rounded-xl font-semibold h-12 w-full"
               >
-                Upload & Index
+                Upload &amp; Index
               </Button>
             </form>
           </CardContent>
