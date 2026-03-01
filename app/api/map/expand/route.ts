@@ -552,31 +552,16 @@ function classifyProseNode(label: string, description: string): AnalysisNode {
   return { label, description, nodeType, relationship, reasoning: 'Extracted from AI legal analysis.', documentName: 'Legal Analysis', confidence: 0.6 };
 }
 
-async function queryBackboard(
+async function querySingleAssistantExpand(
   nodeLabel: string,
   nodeDescription: string,
   claim: string,
-  clientAssistantId: string | null,
+  assistantId: string,
 ): Promise<{ nodes: AnalysisNode[]; summary: string }> {
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
-  // Prefer: client-specific assistant (has the user's documents) → env default → create new
-  let asstId = clientAssistantId ?? process.env.BACKBOARD_ASSISTANT_ID ?? null;
-  if (!asstId) {
-    const asstRes = await fetch(`${baseUrl}/assistants`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
-      body: JSON.stringify({
-        name: 'Argument Map Analyst',
-        system_prompt: SYSTEM_PROMPT,
-      }),
-    });
-    const asst = await asstRes.json();
-    asstId = asst.assistant_id;
-  }
-
-  const threadRes = await fetch(`${baseUrl}/assistants/${asstId}/threads`, {
+  const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({}),
@@ -584,7 +569,6 @@ async function queryBackboard(
   const thread = await threadRes.json();
 
   const content = `I am building an argument map for this legal claim:\n"${claim}"\n\nI need to dig deeper into this specific point:\n**${nodeLabel}**\n${nodeDescription}\n\nReturn 2-5 sub-points that expand on this specific argument. Use uploaded documents where relevant, AND apply general legal reasoning (relevant doctrines, tests, counterarguments, evidentiary considerations). You MUST return the \`\`\`map-nodes JSON block with at least 2 nodes. Do NOT say "no relevant information found."`;
-
 
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
@@ -602,16 +586,79 @@ async function queryBackboard(
   return parseExpandResponse(msg.content ?? '');
 }
 
+async function queryMultipleAssistantsExpand(
+  nodeLabel: string,
+  nodeDescription: string,
+  claim: string,
+  assistantIds: string[],
+): Promise<{ nodes: AnalysisNode[]; summary: string }> {
+  const apiKey = process.env.BACKBOARD_API_KEY!;
+  const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
+
+  // Resolve which assistants to query
+  let ids = assistantIds.filter(Boolean);
+  if (ids.length === 0) {
+    const envId = process.env.BACKBOARD_ASSISTANT_ID;
+    if (envId) {
+      ids = [envId];
+    } else {
+      const asstRes = await fetch(`${baseUrl}/assistants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+        body: JSON.stringify({
+          name: 'Argument Map Analyst',
+          system_prompt: SYSTEM_PROMPT,
+        }),
+      });
+      const asst = await asstRes.json();
+      ids = [asst.assistant_id];
+    }
+  }
+
+  if (ids.length === 1) {
+    return querySingleAssistantExpand(nodeLabel, nodeDescription, claim, ids[0]);
+  }
+
+  // Multiple assistants — query in parallel, merge & deduplicate
+  const results = await Promise.allSettled(
+    ids.map((id) => querySingleAssistantExpand(nodeLabel, nodeDescription, claim, id))
+  );
+
+  const allNodes: AnalysisNode[] = [];
+  const summaries: string[] = [];
+
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      allNodes.push(...r.value.nodes);
+      if (r.value.summary) summaries.push(r.value.summary);
+    } else {
+      console.error('[map/expand] Assistant query failed:', r.reason);
+    }
+  }
+
+  const seen = new Set<string>();
+  const dedupedNodes = allNodes.filter((n) => {
+    const key = n.label.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return {
+    nodes: dedupedNodes,
+    summary: summaries.join(' '),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { nodeLabel, nodeDescription, claim, assistantId: clientAssistantId } = await req.json();
+    const { nodeLabel, nodeDescription, claim, assistantIds } = await req.json();
     if (!nodeLabel || !claim) {
       return NextResponse.json({ error: 'Missing nodeLabel or claim' }, { status: 400 });
     }
 
     if (process.env.BACKBOARD_API_KEY) {
-      const result = await queryBackboard(nodeLabel, nodeDescription ?? '', claim, clientAssistantId ?? null);
-      // If Backboard returned too few nodes, supplement with mock expansion data
+      const result = await queryMultipleAssistantsExpand(nodeLabel, nodeDescription ?? '', claim, assistantIds ?? []);
       if (result.nodes.length < 2) {
         console.log(`[map/expand] Backboard returned only ${result.nodes.length} nodes, supplementing with mock data`);
         const expansion = findExpansion(nodeLabel);

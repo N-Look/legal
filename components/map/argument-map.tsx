@@ -455,7 +455,8 @@ function ArgumentMapInner() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [currentClaim, setCurrentClaim] = useState(HARDCODED_CLAIM);
-  const [currentAssistantId, setCurrentAssistantId] = useState<string | null>(null);
+  const [currentAssistantIds, setCurrentAssistantIds] = useState<string[]>([]);
+  const [indexedDocCount, setIndexedDocCount] = useState<number | null>(null);
   const { fitView } = useReactFlow();
   const nodeCounterRef = useRef(100);
   const initializedRef = useRef(false);
@@ -483,7 +484,7 @@ function ArgumentMapInner() {
             nodeLabel: targetNode.data.label,
             nodeDescription: targetNode.data.description,
             claim: currentClaim,
-            assistantId: currentAssistantId,
+            assistantIds: currentAssistantIds,
           }),
         });
         const data: ExpandResponse = await res.json();
@@ -560,26 +561,30 @@ function ArgumentMapInner() {
         );
       }
     },
-    [nodes, currentClaim, currentAssistantId, setNodes, setEdges, fitView],
+    [nodes, currentClaim, currentAssistantIds, setNodes, setEdges, fitView],
   );
 
-  // Load hardcoded map on mount
+  // Show demo only when no indexed documents exist; otherwise start with empty canvas
   useEffect(() => {
-    if (initializedRef.current) return;
+    if (initializedRef.current || indexedDocCount === null) return;
     initializedRef.current = true;
-    const graph = buildHardcodedGraph(handleExpand);
-    setNodes(graph.nodes);
-    setEdges(graph.edges);
-    setSummary('The evidence landscape is sharply contested. The defense relies on Fisher\'s DOE training, the Four-Step Protocol, and the single Fisher memo as proof of reasonable care. The plaintiff has strong counter-evidence: Sanchez\'s unaddressed email to Dean Green, pervasive social media bullying, Principal Putnam\'s non-intervention philosophy, and Dr. Carter\'s expert testimony on psychological harm.');
-    setTimeout(() => fitView({ duration: 600, padding: 0.08 }), 200);
+    if (indexedDocCount === 0) {
+      // No real documents — show hardcoded demo as showcase
+      const graph = buildHardcodedGraph(handleExpand);
+      setNodes(graph.nodes);
+      setEdges(graph.edges);
+      setSummary('The evidence landscape is sharply contested. The defense relies on Fisher\'s DOE training, the Four-Step Protocol, and the single Fisher memo as proof of reasonable care. The plaintiff has strong counter-evidence: Sanchez\'s unaddressed email to Dean Green, pervasive social media bullying, Principal Putnam\'s non-intervention philosophy, and Dr. Carter\'s expert testimony on psychological harm.');
+      setTimeout(() => fitView({ duration: 600, padding: 0.08 }), 200);
+    }
+    // indexedDocCount > 0: leave canvas empty — user will click "Analyze"
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [indexedDocCount]);
 
   const handleAnalyze = useCallback(
-    async (claim: string, assistantId: string | null) => {
+    async (claim: string, assistantIds: string[]) => {
       setLoading(true);
       setCurrentClaim(claim);
-      setCurrentAssistantId(assistantId);
+      setCurrentAssistantIds(assistantIds);
       setSelectedNodeId(null);
       setSummary(null);
 
@@ -587,7 +592,7 @@ function ArgumentMapInner() {
         const res = await fetch('/api/map/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ claim, assistantId }),
+          body: JSON.stringify({ claim, assistantIds }),
         });
         const data: AnalyzeResponse = await res.json();
         if (!res.ok) throw new Error('Analysis failed');
@@ -629,11 +634,17 @@ function ArgumentMapInner() {
   );
 
   const handleResetLayout = useCallback(() => {
-    const graph = buildHardcodedGraph(handleExpand);
-    setNodes(graph.nodes);
-    setEdges(graph.edges);
-    setTimeout(() => fitView({ duration: 400, padding: 0.08 }), 50);
-  }, [handleExpand, setNodes, setEdges, fitView]);
+    if (indexedDocCount === 0) {
+      const graph = buildHardcodedGraph(handleExpand);
+      setNodes(graph.nodes);
+      setEdges(graph.edges);
+      setTimeout(() => fitView({ duration: 400, padding: 0.08 }), 50);
+    } else {
+      setNodes([]);
+      setEdges([]);
+      setSummary(null);
+    }
+  }, [handleExpand, setNodes, setEdges, fitView, indexedDocCount]);
 
   return (
     <div className="flex -m-8 h-[calc(100%+4rem)]">
@@ -645,6 +656,7 @@ function ArgumentMapInner() {
         onNodeClick={handleNodeListClick}
         selectedNodeId={selectedNodeId}
         summary={summary}
+        onDocumentsLoaded={setIndexedDocCount}
       />
 
       {/* Center — React Flow canvas */}

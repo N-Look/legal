@@ -360,26 +360,11 @@ function recoverPartialJsonArray(jsonStr: string): unknown[] {
   return results;
 }
 
-async function queryBackboard(claim: string, clientAssistantId: string | null): Promise<{ nodes: AnalysisNode[]; summary: string }> {
+async function querySingleAssistant(claim: string, assistantId: string): Promise<{ nodes: AnalysisNode[]; summary: string }> {
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
-  // Prefer: client-specific assistant (has the user's documents) → env default → create new
-  let asstId = clientAssistantId ?? process.env.BACKBOARD_ASSISTANT_ID ?? null;
-  if (!asstId) {
-    const asstRes = await fetch(`${baseUrl}/assistants`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
-      body: JSON.stringify({
-        name: 'Argument Map Analyst',
-        system_prompt: SYSTEM_PROMPT,
-      }),
-    });
-    const asst = await asstRes.json();
-    asstId = asst.assistant_id;
-  }
-
-  const threadRes = await fetch(`${baseUrl}/assistants/${asstId}/threads`, {
+  const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({}),
@@ -408,22 +393,83 @@ async function queryBackboard(claim: string, clientAssistantId: string | null): 
   return parseAnalysisResponse(raw);
 }
 
+async function queryMultipleAssistants(claim: string, assistantIds: string[]): Promise<{ nodes: AnalysisNode[]; summary: string }> {
+  const apiKey = process.env.BACKBOARD_API_KEY!;
+  const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
+
+  // Resolve which assistants to query
+  let ids = assistantIds.filter(Boolean);
+  if (ids.length === 0) {
+    // Fallback: env default or create ephemeral assistant
+    const envId = process.env.BACKBOARD_ASSISTANT_ID;
+    if (envId) {
+      ids = [envId];
+    } else {
+      const asstRes = await fetch(`${baseUrl}/assistants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+        body: JSON.stringify({
+          name: 'Argument Map Analyst',
+          system_prompt: SYSTEM_PROMPT,
+        }),
+      });
+      const asst = await asstRes.json();
+      ids = [asst.assistant_id];
+    }
+  }
+
+  // Single assistant — query directly
+  if (ids.length === 1) {
+    return querySingleAssistant(claim, ids[0]);
+  }
+
+  // Multiple assistants — query in parallel, merge & deduplicate
+  const results = await Promise.allSettled(
+    ids.map((id) => querySingleAssistant(claim, id))
+  );
+
+  const allNodes: AnalysisNode[] = [];
+  const summaries: string[] = [];
+
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      allNodes.push(...r.value.nodes);
+      if (r.value.summary) summaries.push(r.value.summary);
+    } else {
+      console.error('[map/analyze] Assistant query failed:', r.reason);
+    }
+  }
+
+  // Deduplicate by lowercase label
+  const seen = new Set<string>();
+  const dedupedNodes = allNodes.filter((n) => {
+    const key = n.label.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return {
+    nodes: dedupedNodes,
+    summary: summaries.join(' '),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { claim, assistantId: clientAssistantId } = await req.json();
+    const { claim, assistantIds } = await req.json();
     if (!claim || typeof claim !== 'string' || claim.trim().length < 5) {
       return NextResponse.json({ error: 'Claim too short' }, { status: 400 });
     }
 
     if (process.env.BACKBOARD_API_KEY) {
-      const result = await queryBackboard(claim.trim(), clientAssistantId ?? null);
-      // If Backboard returned too few nodes, supplement with mock data
+      const result = await queryMultipleAssistants(claim.trim(), assistantIds ?? []);
       if (result.nodes.length < 4) {
         console.log(`[map/analyze] Backboard returned only ${result.nodes.length} nodes, supplementing with mock data`);
         const existingLabels = new Set(result.nodes.map((n) => n.label.toLowerCase()));
         const supplemental = MOCK_NODES.filter((n) => !existingLabels.has(n.label.toLowerCase()));
         result.nodes = [...result.nodes, ...supplemental];
-        if (!result.summary || result.summary.length < 50) {
+        if (!result.summary || result.summary.length < 30) {
           result.summary = MOCK_SUMMARY;
         }
       }

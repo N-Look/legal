@@ -37,15 +37,16 @@ const EXAMPLE_CLAIM = 'The defense was not legally responsible for Terry\'s dama
 type DocumentWithClient = Document & { clients?: { name: string }; matters?: { name: string } | null };
 
 interface ClaimInputProps {
-  onAnalyze: (claim: string, assistantId: string | null) => void;
+  onAnalyze: (claim: string, assistantIds: string[]) => void;
   loading: boolean;
   nodes: Node<MapNodeData>[];
   onNodeClick: (nodeId: string) => void;
   selectedNodeId: string | null;
   summary: string | null;
+  onDocumentsLoaded?: (count: number) => void;
 }
 
-export function ClaimInput({ onAnalyze, loading, nodes, onNodeClick, selectedNodeId, summary }: ClaimInputProps) {
+export function ClaimInput({ onAnalyze, loading, nodes, onNodeClick, selectedNodeId, summary, onDocumentsLoaded }: ClaimInputProps) {
   const [claim, setClaim] = useState(EXAMPLE_CLAIM);
   const [showNodes, setShowNodes] = useState(true);
   const [showDocs, setShowDocs] = useState(true);
@@ -66,35 +67,29 @@ export function ClaimInput({ onAnalyze, loading, nodes, onNodeClick, selectedNod
           setDocuments(indexed);
           // Select all by default
           setSelectedDocIds(new Set(indexed.map((d) => d.id)));
+          onDocumentsLoaded?.(indexed.length);
         }
       } catch {
         // silently fail — documents are optional for the map
+        onDocumentsLoaded?.(0);
       } finally {
         setDocsLoading(false);
       }
     }
     fetchDocs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Derive the assistantId from selected documents (all docs from same client share an assistant)
-  const selectedAssistantId = useMemo(() => {
+  // Derive unique assistant IDs from all selected documents
+  const selectedAssistantIds = useMemo(() => {
     const selectedDocs = documents.filter((d) => selectedDocIds.has(d.id));
-    // Find the most common assistant ID among selected docs
-    const assistantCounts = new Map<string, number>();
+    const ids = new Set<string>();
     for (const doc of selectedDocs) {
       if (doc.backboard_assistant_id) {
-        assistantCounts.set(doc.backboard_assistant_id, (assistantCounts.get(doc.backboard_assistant_id) ?? 0) + 1);
+        ids.add(doc.backboard_assistant_id);
       }
     }
-    let best: string | null = null;
-    let bestCount = 0;
-    for (const [id, count] of assistantCounts) {
-      if (count > bestCount) {
-        best = id;
-        bestCount = count;
-      }
-    }
-    return best;
+    return Array.from(ids);
   }, [documents, selectedDocIds]);
 
   const toggleDoc = (docId: string) => {
@@ -112,7 +107,7 @@ export function ClaimInput({ onAnalyze, loading, nodes, onNodeClick, selectedNod
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (claim.trim().length >= 5 && !loading) {
-      onAnalyze(claim.trim(), selectedAssistantId);
+      onAnalyze(claim.trim(), selectedAssistantIds);
     }
   };
 
