@@ -717,8 +717,8 @@ function ArgumentMapInner() {
           {
             ...connection,
             type: 'default',
-            style: { stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
-            markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: '#94a3b8' },
+            style: { stroke: 'rgba(148,163,184,0.25)', strokeWidth: 0.8, strokeDasharray: '6 3' },
+            markerEnd: { type: MarkerType.ArrowClosed, width: 5, height: 5, color: '#94a3b8' },
             data: { relationship: 'provides-context' as const, reasoning: 'Manual connection' },
           },
           eds,
@@ -778,31 +778,22 @@ function ArgumentMapInner() {
           maxZoom={3}
           defaultEdgeOptions={{ type: 'default', animated: false }}
           proOptions={{ hideAttribution: true }}
-          style={{ background: '#f8f9fb' }}
+          style={{ background: '#fafbfc' }}
         >
-          <Background gap={40} size={1} color="#e8eaed" />
+          <Background gap={50} size={0.6} color="rgba(0,0,0,0.04)" />
           <MapToolbar onResetLayout={handleResetLayout} />
         </ReactFlow>
 
-        {/* Legend */}
+        {/* Minimal legend */}
         {nodes.length > 0 && (
-          <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 rounded-2xl px-4 py-3.5 border shadow-lg"
-            style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderColor: '#e5e7eb' }}>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#9ca3af', marginBottom: 2 }}>Legend</span>
-            <LegendItem color="#16a34a" label="Supports claim" />
-            <LegendItem color="#dc2626" label="Opposes claim" animated />
-            <LegendItem color="#d97706" label="Context" />
-            <LegendItem color="#7c3aed" label="Sub-argument" />
-            <div style={{ borderTop: '1px solid #f3f4f6', marginTop: 4, paddingTop: 6 }}>
-              <div className="flex items-center gap-2 mb-1.5">
-                <div style={{ width: 24, borderTop: '2px dashed #94a3b8' }} />
-                <span style={{ fontSize: 9, color: '#9ca3af' }}>Multi-source</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div style={{ width: 24, borderTop: '1px dashed #d1d5db' }} />
-                <span style={{ fontSize: 9, color: '#9ca3af' }}>Cross-reference</span>
-              </div>
-            </div>
+          <div
+            className="absolute top-4 left-4 z-10 flex items-center gap-4 rounded-full px-4 py-2"
+            style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.06)' }}
+          >
+            <LegendDot color="#16a34a" label="Supports" />
+            <LegendDot color="#dc2626" label="Opposes" />
+            <LegendDot color="#d97706" label="Context" />
+            <LegendDot color="#7c3aed" label="Sub-arg" />
           </div>
         )}
       </div>
@@ -823,14 +814,11 @@ function ArgumentMapInner() {
   );
 }
 
-function LegendItem({ color, label, animated }: { color: string; label: string; animated?: boolean }) {
+function LegendDot({ color, label }: { color: string; label: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="flex items-center gap-1.5" style={{ width: 40 }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
-        <div style={{ flex: 1, height: 1.5, background: color, opacity: animated ? 0.6 : 0.3 }} />
-      </div>
-      <span style={{ fontSize: 9, color: '#6b7280' }}>{label}</span>
+    <div className="flex items-center gap-1.5">
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+      <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500 }}>{label}</span>
     </div>
   );
 }
