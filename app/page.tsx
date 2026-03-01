@@ -429,7 +429,7 @@ export default function LandingPage() {
                                 <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
                                 <div className="w-3 h-3 rounded-full bg-zinc-700"></div>
                             </div>
-                            <span className="ml-4 text-xs font-mono text-zinc-400">~/workspace/jones-v-smith</span>
+                            <span className="ml-4 text-xs font-mono text-zinc-400">~/workspace/smith-v-midville</span>
                         </div>
                         <motion.div
                             variants={staggerContainer}
@@ -446,8 +446,8 @@ export default function LandingPage() {
                                 <motion.div variants={itemVariant} className="text-blue-400 mb-1">documents/</motion.div>
                                 <motion.div variants={itemVariant} className="pl-4 border-l border-zinc-800 ml-2 space-y-2">
                                     <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> smith_deposition.pdf</motion.div>
-                                    <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> exhibit_a.pdf</motion.div>
-                                    <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> expert_report.docx</motion.div>
+                                    <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> exhibit_1_social_media.pdf</motion.div>
+                                    <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> carter_expert_report.pdf</motion.div>
                                 </motion.div>
                                 <motion.div variants={itemVariant} className="text-blue-400 mt-2 mb-1">exports/</motion.div>
                                 <motion.div variants={itemVariant} className="pl-4 border-l border-zinc-800 ml-2 space-y-2">

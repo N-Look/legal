@@ -23,10 +23,10 @@ import { Citation, AuthorityPack } from "@/types/citation";
 
 // Default binder authorities (matching original screenshot)
 const DEFAULT_BINDER: Citation[] = [
-    { id: "default-1", raw: "Acme Corp v. Jones, 2018 ONSC 1123", caseName: "Acme Corp v. Jones", reporter: "2018 ONSC 1123", year: "2018", type: "case", status: "resolved" },
-    { id: "default-2", raw: "Goldberg v. Kelly, 397 U.S. 254 (1970)", caseName: "Goldberg v. Kelly", reporter: "397 U.S. 254", year: "1970", type: "case", status: "resolved" },
-    { id: "default-3", raw: "Goldberg vr. Kelly, 397 U.S. 254 (1970)", caseName: "Goldberg vr. Kelly", reporter: "397 U.S. 254", year: "1970", type: "case", status: "ambiguous", passage: "DUE PROCESS" },
-    { id: "default-4", raw: "Sample Energy v. Green Falls Co., 2022 ONCA 201", caseName: "Sample Energy v. Green Falls Co.", reporter: "2022 ONCA 201", year: "2022", type: "case", status: "resolved" },
+    { id: "default-1", raw: "Davis v. Monroe County Bd. of Educ., 526 U.S. 629 (1999)", caseName: "Davis v. Monroe County Bd. of Educ.", reporter: "526 U.S. 629", year: "1999", type: "case", status: "resolved" },
+    { id: "default-2", raw: "Tinker v. Des Moines Indep. Cmty. Sch. Dist., 393 U.S. 503 (1969)", caseName: "Tinker v. Des Moines Indep. Cmty. Sch. Dist.", reporter: "393 U.S. 503", year: "1969", type: "case", status: "resolved" },
+    { id: "default-3", raw: "Nabozny v. Podlesny, 92 F.3d 446 (1996)", caseName: "Nabozny v. Podlesny", reporter: "92 F.3d 446", year: "1996", type: "case", status: "ambiguous", passage: "FAILURE TO PROTECT" },
+    { id: "default-4", raw: "Mahanoy Area Sch. Dist. v. B.L., 141 S. Ct. 2038 (2021)", caseName: "Mahanoy Area Sch. Dist. v. B.L.", reporter: "141 S. Ct. 2038", year: "2021", type: "case", status: "resolved" },
 ];
 
 type Step = "idle" | "searching" | "results";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
     const [citations, setCitations] = React.useState<Citation[]>([]);
     const [error, setError] = React.useState("");
     const [binder, setBinder] = React.useState<Citation[]>(DEFAULT_BINDER);
-    const [matterName] = React.useState("Jones v. Smith");
+    const [matterName] = React.useState("Smith v. Midville");
     const [showSummary, setShowSummary] = React.useState(false);
     const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
