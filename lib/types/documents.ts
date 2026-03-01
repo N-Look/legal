@@ -22,4 +22,4 @@ export interface DocumentListFilters {
   search?: string;
 }
 
-export type UploadPhase = 'idle' | 'validating' | 'uploading' | 'processing' | 'complete' | 'error';
+export type UploadPhase = 'idle' | 'validating' | 'uploading' | 'processing' | 'timeout' | 'complete' | 'error';

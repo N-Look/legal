@@ -30,7 +30,7 @@ function UploadStatusPill() {
 
     if (phase === "idle") return null;
 
-    const isActive = phase !== "complete" && phase !== "error";
+    const isActive = phase !== "complete" && phase !== "error" && phase !== "timeout";
 
     return (
         <div className={`mx-2 mt-2 rounded-2xl border px-4 py-3 text-xs flex flex-col gap-2 transition-colors ${
@@ -38,6 +38,8 @@ function UploadStatusPill() {
                 ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30"
                 : phase === "error"
                 ? "border-destructive/30 bg-destructive/5"
+                : phase === "timeout"
+                ? "border-amber-200 bg-amber-50 dark:bg-amber-950/30"
                 : "border-border/60 bg-background"
         }`}>
             <div className="flex items-center justify-between gap-2">
@@ -46,6 +48,8 @@ function UploadStatusPill() {
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : phase === "error" ? (
                         <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                    ) : phase === "timeout" ? (
+                        <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin shrink-0" />
                     ) : (
                         <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
                     )}
@@ -54,6 +58,8 @@ function UploadStatusPill() {
                             ? "Indexed"
                             : phase === "error"
                             ? "Failed"
+                            : phase === "timeout"
+                            ? "Still indexing…"
                             : phase === "processing"
                             ? "Indexing…"
                             : "Uploading…"}
