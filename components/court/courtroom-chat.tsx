@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Swords, Gavel, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { Send, Swords, Gavel, Loader2, AlertCircle, RotateCcw, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import type { CourtroomMessage, SimulationPhase } from "@/types/simulation";
 
 const PHASE_PLACEHOLDERS: Record<string, string> = {
   opening: "Deliver your opening statement to the court...",
-  examination: "Examine the witness or present your argument...",
+  examination: "Ask the witness a question...",
   closing: "Make your closing argument to the jury...",
   verdict: "The jury is deliberating...",
 };
@@ -21,6 +21,8 @@ function roleIcon(role: CourtroomMessage["role"]) {
       return <Swords className="w-4 h-4" />;
     case "judge":
       return <Gavel className="w-4 h-4" />;
+    case "witness":
+      return <User className="w-4 h-4" />;
     default:
       return null;
   }
@@ -36,6 +38,8 @@ function roleLabel(role: CourtroomMessage["role"]) {
       return "Judge";
     case "jury":
       return "Jury";
+    case "witness":
+      return "Witness";
   }
 }
 
@@ -47,6 +51,8 @@ function roleBadgeClass(role: CourtroomMessage["role"]) {
       return "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400";
     case "jury":
       return "bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400";
+    case "witness":
+      return "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400";
     default:
       return "";
   }
@@ -161,7 +167,9 @@ export function CourtroomChat() {
             <p className="text-sm">
               {phase === "opening"
                 ? "The court is in session. Deliver your opening statement."
-                : "Begin when you are ready, counsel."}
+                : phase === "examination"
+                  ? "A witness has been called to the stand. You may begin your examination."
+                  : "Begin when you are ready, counsel."}
             </p>
           </div>
         )}

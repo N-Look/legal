@@ -1,6 +1,6 @@
 // === Courtroom Simulation Types ===
 
-export type CourtroomRole = 'user' | 'opposing-counsel' | 'judge' | 'jury';
+export type CourtroomRole = 'user' | 'opposing-counsel' | 'judge' | 'jury' | 'witness';
 
 export type SimulationPhase =
   | 'setup'
@@ -38,6 +38,7 @@ export interface SimulationThreads {
   opposingCounsel: string | null;
   judge: string | null;
   jury: string | null;
+  witness: string | null;
 }
 
 export interface SimulationRequest {

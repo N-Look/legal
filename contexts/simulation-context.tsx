@@ -54,6 +54,7 @@ export function SimulationProvider({
     opposingCounsel: null,
     judge: null,
     jury: null,
+    witness: null,
   });
 
   const startSimulation = useCallback((cfg: SimulationConfig) => {
@@ -62,7 +63,7 @@ export function SimulationProvider({
     setMessages([]);
     setJuryScore(DEFAULT_JURY_SCORE);
     setError(null);
-    threadsRef.current = { opposingCounsel: null, judge: null, jury: null };
+    threadsRef.current = { opposingCounsel: null, judge: null, jury: null, witness: null };
   }, []);
 
   const sendStatement = useCallback(
@@ -82,7 +83,7 @@ export function SimulationProvider({
       setMessages((prev) => [...prev, userMsg]);
 
       try {
-        setRespondingRole("Opposing Counsel");
+        setRespondingRole(phase === "examination" ? "Witness" : "Opposing Counsel");
 
         const body: SimulationRequest = {
           message,
@@ -132,7 +133,7 @@ export function SimulationProvider({
     setSending(false);
     setError(null);
     setRespondingRole(null);
-    threadsRef.current = { opposingCounsel: null, judge: null, jury: null };
+    threadsRef.current = { opposingCounsel: null, judge: null, jury: null, witness: null };
   }, []);
 
   return (
