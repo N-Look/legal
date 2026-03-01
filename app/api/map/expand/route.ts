@@ -23,6 +23,7 @@ containing an array of 2-5 evidence/argument objects. Each object must have:
 - reasoning (string, 1 sentence): why this connects to the point being expanded
 - documentName (string): source document filename, or "Legal Analysis" for general reasoning
 - confidence (number 0-1): 0.8+ for document-backed, 0.5-0.8 for legal reasoning
+- connectsTo (optional array of strings): labels of OTHER nodes in your response that this sub-point also logically connects to. Use when multiple pieces of evidence support the same conclusion.
 
 2. THEN, write a 1-sentence summary.
 
@@ -397,6 +398,7 @@ function mapNode(n: Record<string, unknown>): AnalysisNode {
     reasoning: (n.reasoning as string) ?? '',
     documentName: (n.documentName as string) ?? undefined,
     confidence: typeof n.confidence === 'number' ? n.confidence : 0.5,
+    connectsTo: Array.isArray(n.connectsTo) ? (n.connectsTo as string[]).filter((s) => typeof s === 'string') : undefined,
   };
 }
 

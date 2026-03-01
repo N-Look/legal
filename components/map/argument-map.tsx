@@ -6,6 +6,7 @@ import {
   Background,
   type Node,
   type Edge,
+  type Connection,
   useNodesState,
   useEdgesState,
   ReactFlowProvider,
@@ -13,6 +14,7 @@ import {
   ConnectionLineType,
   type OnSelectionChangeParams,
   MarkerType,
+  addEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -407,6 +409,42 @@ function buildLayeredDAG(
     });
   });
 
+  // Build label → nodeId lookup for connectsTo resolution
+  const labelToNodeId = new Map<string, string>();
+  for (const [idx, nodeId] of nodeIdMap.entries()) {
+    const label = analysisNodes[idx].label.toLowerCase().trim();
+    labelToNodeId.set(label, nodeId);
+  }
+  // Also include synthesis nodes
+  for (const ag of activeGroups) {
+    labelToNodeId.set(ag.label.toLowerCase().trim(), ag.id);
+  }
+
+  // Multi-parent edges from connectsTo field
+  const connSeen = new Set<string>();
+  for (let i = 0; i < analysisNodes.length; i++) {
+    const an = analysisNodes[i];
+    if (!an.connectsTo?.length) continue;
+    const sourceId = nodeIdMap.get(i);
+    if (!sourceId) continue;
+    for (const targetLabel of an.connectsTo) {
+      const targetId = labelToNodeId.get(targetLabel.toLowerCase().trim());
+      if (!targetId || targetId === sourceId) continue;
+      const key = [sourceId, targetId].sort().join('-');
+      if (connSeen.has(key)) continue;
+      connSeen.add(key);
+      allEdges.push({
+        id: `conn-${sourceId}-${targetId}`,
+        source: sourceId,
+        target: targetId,
+        type: 'default',
+        style: { stroke: EDGE_COLORS[an.relationship] ?? '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_COLORS[an.relationship] ?? '#94a3b8' },
+        data: { relationship: an.relationship, reasoning: an.reasoning },
+      });
+    }
+  }
+
   // Cross-reference edges (dashed) between evidence in different groups
   const seen = new Set<string>();
   for (let i = 0; i < analysisNodes.length; i++) {
@@ -418,7 +456,7 @@ function buildLayeredDAG(
         const idB = nodeIdMap.get(j);
         if (!idA || !idB) continue;
         const key = [idA, idB].sort().join('-');
-        if (seen.has(key)) continue;
+        if (seen.has(key) || connSeen.has(key)) continue;
         seen.add(key);
         allEdges.push({
           id: `cross-${idA}-${idB}`,
@@ -523,6 +561,39 @@ function ArgumentMapInner() {
           data: { relationship: data.nodes[i].relationship, reasoning: data.nodes[i].reasoning },
         }));
 
+        // Multi-parent edges from connectsTo
+        const connEdges: Edge<MapEdgeData>[] = [];
+        const existingLabelToId = new Map<string, string>();
+        for (const n of nodes) {
+          existingLabelToId.set(n.data.label.toLowerCase().trim(), n.id);
+        }
+        // Also index new nodes
+        for (const nn of newNodes) {
+          existingLabelToId.set(nn.data.label.toLowerCase().trim(), nn.id);
+        }
+
+        const connSeen = new Set<string>();
+        data.nodes.forEach((an, idx) => {
+          if (!an.connectsTo?.length) return;
+          const sourceId = newNodes[idx].id;
+          for (const targetLabel of an.connectsTo) {
+            const targetId = existingLabelToId.get(targetLabel.toLowerCase().trim());
+            if (!targetId || targetId === sourceId) continue;
+            const key = [sourceId, targetId].sort().join('-');
+            if (connSeen.has(key)) continue;
+            connSeen.add(key);
+            connEdges.push({
+              id: `conn-${sourceId}-${targetId}`,
+              source: sourceId,
+              target: targetId,
+              type: 'default',
+              style: { stroke: EDGE_COLORS[an.relationship] ?? '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
+              markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_COLORS[an.relationship] ?? '#94a3b8' },
+              data: { relationship: an.relationship, reasoning: an.reasoning },
+            });
+          }
+        });
+
         // Cross-link to existing nodes
         const existingAnalysisNodes = nodes
           .filter((n) => n.data.nodeType !== 'claim')
@@ -534,6 +605,8 @@ function ArgumentMapInner() {
           existingAnalysisNodes.forEach((existAn, existIdx) => {
             const link = findCrossLink(newAn, existAn);
             if (link) {
+              const key = [newNodes[newIdx].id, existingIds[existIdx]].sort().join('-');
+              if (connSeen.has(key)) return; // already connected via connectsTo
               crossEdges.push({
                 id: `cross-${newNodes[newIdx].id}-${existingIds[existIdx]}`,
                 source: newNodes[newIdx].id,
@@ -550,7 +623,7 @@ function ArgumentMapInner() {
           ...nds.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, expanding: false } } : n)),
           ...newNodes,
         ]);
-        setEdges((eds) => [...eds, ...newEdges, ...crossEdges]);
+        setEdges((eds) => [...eds, ...newEdges, ...connEdges, ...crossEdges]);
         setTimeout(() => fitView({ duration: 500, padding: 0.1 }), 100);
       } catch (err) {
         console.error('[expand]', err);
@@ -625,6 +698,25 @@ function ArgumentMapInner() {
     else if (sel.length === 0) setSelectedNodeId(null);
   }, []);
 
+  // Manual edge drawing — user drags from one handle to another
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            type: 'default',
+            style: { stroke: '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
+            markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: '#94a3b8' },
+            data: { relationship: 'provides-context' as const, reasoning: 'Manual connection' },
+          },
+          eds,
+        ),
+      );
+    },
+    [setEdges],
+  );
+
   const handleNodeListClick = useCallback(
     (nodeId: string) => {
       setSelectedNodeId(nodeId);
@@ -666,6 +758,7 @@ function ArgumentMapInner() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onConnect={handleConnect}
           onSelectionChange={handleSelectionChange}
           nodeTypes={nodeTypes}
           connectionLineType={ConnectionLineType.SmoothStep}
@@ -690,6 +783,10 @@ function ArgumentMapInner() {
             <LegendItem color="#d97706" label="Context" />
             <LegendItem color="#7c3aed" label="Sub-argument" />
             <div style={{ borderTop: '1px solid #f3f4f6', marginTop: 4, paddingTop: 6 }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div style={{ width: 24, borderTop: '2px dashed #94a3b8' }} />
+                <span style={{ fontSize: 9, color: '#9ca3af' }}>Multi-source</span>
+              </div>
               <div className="flex items-center gap-2">
                 <div style={{ width: 24, borderTop: '1px dashed #d1d5db' }} />
                 <span style={{ fontSize: 9, color: '#9ca3af' }}>Cross-reference</span>
@@ -699,7 +796,7 @@ function ArgumentMapInner() {
         )}
       </div>
 
-      {/* Right detail panel */}
+      {/* Right detail panel with embedded chat */}
       {selectedNode && (
         <NodeDetailPanel
           node={selectedNode}
@@ -707,6 +804,8 @@ function ArgumentMapInner() {
           onExpand={handleExpand}
           onRemove={handleRemoveNode}
           expanding={expandingNodeId === selectedNodeId}
+          claim={currentClaim}
+          assistantIds={currentAssistantIds}
         />
       )}
     </div>

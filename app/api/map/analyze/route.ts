@@ -23,11 +23,13 @@ containing an array of 8-14 evidence/argument objects. Each object must have:
 - reasoning (string, 1 sentence): why this node matters to the overall argument
 - documentName (string): source document filename if from uploaded docs, or "Legal Analysis" if from general reasoning
 - confidence (number 0-1): 0.8+ for document-backed evidence, 0.5-0.8 for legal reasoning, 0.3-0.5 for speculative arguments
+- connectsTo (optional array of strings): labels of OTHER nodes in your response that this node also logically connects to. Use this when a conclusion draws from multiple pieces of evidence, or when two exhibits support the same reasoning node. This creates a reasoning NETWORK, not just a tree.
 
 ALWAYS include a mix of:
 - At least 3 nodes supporting the claim
 - At least 3 nodes opposing/challenging the claim
 - At least 2 context or sub-argument nodes
+- At least 2-3 nodes should have connectsTo links to show multi-source reasoning
 
 2. THEN, after the JSON block, write a 2-3 sentence summary of the argument landscape and key battlegrounds.
 
@@ -108,6 +110,7 @@ const MOCK_NODES: AnalysisNode[] = [
     reasoning: 'Expert testimony on causation and damages directly undermines the "reasonable care" defense.',
     documentName: 'n.pdf — Dr. Carter Witness Statement',
     confidence: 0.89,
+    connectsTo: ['IIED Claim — Extreme and Outrageous Conduct', 'Social Media Bullying Was Pervasive and Visible'],
   },
   {
     label: 'Multiple Staff Knew But System Failed',
@@ -117,6 +120,7 @@ const MOCK_NODES: AnalysisNode[] = [
     reasoning: 'Fragmented awareness across multiple staff proves the system failed to connect the dots.',
     documentName: 'n.pdf — Multiple Witness Statements',
     confidence: 0.87,
+    connectsTo: ['Sanchez Email to Green Went Unaddressed', 'Fisher Memo — Prompt Documented Response'],
   },
 
   // === CONTEXT / SUB-ARGUMENTS ===
@@ -343,6 +347,7 @@ function mapNode(n: Record<string, unknown>): AnalysisNode {
     reasoning: (n.reasoning as string) ?? '',
     documentName: (n.documentName as string) ?? undefined,
     confidence: typeof n.confidence === 'number' ? n.confidence : 0.5,
+    connectsTo: Array.isArray(n.connectsTo) ? (n.connectsTo as string[]).filter((s) => typeof s === 'string') : undefined,
   };
 }
 

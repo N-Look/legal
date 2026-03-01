@@ -25,6 +25,8 @@ export interface AnalysisNode {
   reasoning: string;
   documentName?: string;
   confidence?: number;
+  /** Labels of other nodes this node also connects to (multi-parent support) */
+  connectsTo?: string[];
 }
 
 export interface AnalyzeRequest {
