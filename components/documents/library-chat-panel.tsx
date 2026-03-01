@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquare, Send, Loader2, X, Quote, FileText } from "lucide-react";
+import { MessageSquare, Send, Loader2, X, Quote, FileText, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLibraryChat } from "@/hooks/use-library-chat";
+import { useLibraryChatContext } from "@/contexts/library-chat-context";
 import type { ChatMessage } from "@/hooks/use-document-chat";
 
 function parseContent(
@@ -146,7 +146,7 @@ interface LibraryChatPanelProps {
 }
 
 export function LibraryChatPanel({ open, onClose, onDocumentSelect }: LibraryChatPanelProps) {
-  const { messages, sending, error, documentIds, sendMessage } = useLibraryChat();
+  const { messages, sending, error, documentIds, sendMessage, reset } = useLibraryChatContext();
   const [input, setInput] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -180,14 +180,27 @@ export function LibraryChatPanel({ open, onClose, onDocumentSelect }: LibraryCha
           <MessageSquare className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">Search All Documents</h3>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-lg"
-          onClick={onClose}
-        >
-          <X className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 rounded-lg text-xs text-muted-foreground gap-1.5"
+              onClick={reset}
+            >
+              <RotateCcw className="w-3 h-3" />
+              New
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-lg"
+            onClick={onClose}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -207,7 +220,7 @@ export function LibraryChatPanel({ open, onClose, onDocumentSelect }: LibraryCha
             </div>
           </div>
         )}
-        {messages.map((msg) => (
+        {messages.map((msg: ChatMessage) => (
           <ChatBubble
             key={msg.id}
             message={msg}

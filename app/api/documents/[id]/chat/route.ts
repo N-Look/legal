@@ -3,11 +3,19 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 import { createThread, sendMessage } from '@/lib/backboard/client';
 
 function buildScopedMessage(filename: string, userMessage: string): string {
-  return `[System context: You are answering questions about a specific document titled "${filename}".
-Only answer using content from this document. When quoting text from the document, wrap exact quotes in «quote»...«/quote» markers.
-If the information is not found in the document, say so clearly. Do not fabricate or guess.]
+  return `[INSTRUCTIONS — follow these exactly:
+You are answering questions about the document "${filename}". Only use content from this document.
 
-User question: ${userMessage}`;
+RULES:
+1. Answer directly and concisely. Get to the point immediately — no preamble like "Based on the document..." or "According to...".
+2. When quoting text from the document, wrap exact quotes in «quote»...«/quote» markers.
+3. Use plain text paragraphs. No emojis. No markdown headers (#). No horizontal rules (---).
+4. Use bullet points or numbered lists only when listing multiple items. Keep list items short (one line each).
+5. If the information is not in the document, say so in one sentence. Do not guess or fabricate.
+6. Match the depth of your answer to the question — short questions get short answers, detailed questions get detailed answers.
+7. Never repeat the question back. Never add disclaimers or meta-commentary about what you can or cannot do.]
+
+${userMessage}`;
 }
 
 function parseQuotes(content: string): string[] {

@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Info,
   Quote,
+  RotateCcw,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,7 +36,8 @@ import {
 import { StatusBadge } from "./status-badge";
 import { PdfViewer, type PdfViewerHandle } from "./pdf-viewer";
 import { useDocumentDetails } from "@/hooks/use-document-details";
-import { useDocumentChat, type ChatMessage } from "@/hooks/use-document-chat";
+import type { ChatMessage } from "@/hooks/use-document-chat";
+import { useDocumentChatContext } from "@/contexts/document-chat-context";
 import { useDocumentFile } from "@/hooks/use-document-file";
 import { TextViewer } from "./text-viewer";
 import type { BackboardStatus } from "@/lib/types/database";
@@ -204,7 +206,8 @@ function ChatSection({
   backboardStatus: BackboardStatus;
   onQuoteClick?: (quote: string) => void;
 }) {
-  const { messages, sending, error, sendMessage, reset } = useDocumentChat();
+  const { getChat, sending, error, sendMessage, resetChat } = useDocumentChatContext();
+  const { messages } = getChat(documentId);
   const [input, setInput] = React.useState("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -214,11 +217,6 @@ function ChatSection({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
-
-  // Reset chat state when documentId changes
-  React.useEffect(() => {
-    reset();
-  }, [documentId, reset]);
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -238,6 +236,21 @@ function ChatSection({
 
   return (
     <div className="flex flex-col h-full">
+      {/* Chat header with New Chat button */}
+      {messages.length > 0 && (
+        <div className="flex items-center justify-end px-4 pt-3 pb-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 rounded-lg text-xs text-muted-foreground gap-1.5"
+            onClick={() => resetChat(documentId)}
+          >
+            <RotateCcw className="w-3 h-3" />
+            New Chat
+          </Button>
+        </div>
+      )}
+
       {/* Messages area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-1">
         {messages.length === 0 && (
@@ -257,7 +270,7 @@ function ChatSection({
             </div>
           </div>
         )}
-        {messages.map((msg) => (
+        {messages.map((msg: ChatMessage) => (
           <ChatBubble key={msg.id} message={msg} onQuoteClick={onQuoteClick} />
         ))}
         {sending && (

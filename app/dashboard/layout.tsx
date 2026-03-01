@@ -22,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UploadProvider, useUploadContext } from "@/contexts/upload-context";
+import { DocumentChatProvider } from "@/contexts/document-chat-context";
+import { LibraryChatProvider } from "@/contexts/library-chat-context";
 
 function UploadStatusPill() {
     const { phase, progress, filename, reset } = useUploadContext();
@@ -239,7 +241,11 @@ export default function DashboardLayout({
 }) {
     return (
         <UploadProvider>
-            <DashboardLayoutInner>{children}</DashboardLayoutInner>
+            <DocumentChatProvider>
+                <LibraryChatProvider>
+                    <DashboardLayoutInner>{children}</DashboardLayoutInner>
+                </LibraryChatProvider>
+            </DocumentChatProvider>
         </UploadProvider>
     );
 }
