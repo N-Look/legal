@@ -11,14 +11,17 @@ export function MapToolbar({ onResetLayout }: MapToolbarProps) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
 
   return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-full px-2 py-1.5 shadow-2xl">
+    <div
+      className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 rounded-full px-2 py-1.5 shadow-lg border"
+      style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)', borderColor: '#e5e7eb' }}
+    >
       <ToolbarButton onClick={() => zoomIn({ duration: 200 })} title="Zoom in">
         <ZoomIn className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton onClick={() => zoomOut({ duration: 200 })} title="Zoom out">
         <ZoomOut className="w-4 h-4" />
       </ToolbarButton>
-      <div className="w-px h-5 bg-white/10 mx-1" />
+      <div style={{ width: 1, height: 20, background: '#e5e7eb', margin: '0 4px' }} />
       <ToolbarButton onClick={() => fitView({ duration: 300, padding: 0.15 })} title="Fit to view">
         <Maximize2 className="w-4 h-4" />
       </ToolbarButton>
@@ -34,7 +37,10 @@ function ToolbarButton({ onClick, title, children }: { onClick: () => void; titl
     <button
       onClick={onClick}
       title={title}
-      className="w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+      className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+      style={{ color: '#6b7280' }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = '#1f2937'; e.currentTarget.style.background = '#f3f4f6'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = '#6b7280'; e.currentTarget.style.background = 'transparent'; }}
     >
       {children}
     </button>
