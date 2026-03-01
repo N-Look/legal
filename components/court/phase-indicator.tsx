@@ -22,7 +22,7 @@ export function PhaseIndicator({ phase }: { phase: SimulationPhase }) {
   const currentIdx = PHASE_ORDER[phase] ?? 0;
 
   return (
-    <div className="flex items-center gap-0.5">
+    <div className="flex items-center gap-1">
       {PHASES.map((p, i) => {
         const isActive = p.key === phase;
         const isCompleted = currentIdx > i;
@@ -32,17 +32,19 @@ export function PhaseIndicator({ phase }: { phase: SimulationPhase }) {
           <div key={p.key} className="flex items-center">
             {i > 0 && (
               <div
-                className={`w-4 h-px mx-0.5 ${
-                  isCompleted ? "bg-primary" : "bg-border"
+                className={`w-5 h-px mx-0.5 ${
+                  isCompleted
+                    ? "bg-amber-500/60"
+                    : "bg-border"
                 }`}
               />
             )}
             <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 ring-1 ring-amber-300/50 dark:ring-amber-700/50"
                   : isCompleted
-                    ? "bg-primary/10 text-primary"
+                    ? "text-amber-600 dark:text-amber-400"
                     : "text-muted-foreground"
               } ${isFuture ? "opacity-40" : ""}`}
               title={p.label}
@@ -50,7 +52,7 @@ export function PhaseIndicator({ phase }: { phase: SimulationPhase }) {
               {isCompleted ? (
                 <Check className="w-3 h-3" />
               ) : isActive ? (
-                <Circle className="w-2.5 h-2.5 fill-current" />
+                <Circle className="w-2 h-2 fill-current" />
               ) : null}
               <span className="hidden sm:inline">{p.label}</span>
               <span className="sm:hidden">{p.short}</span>

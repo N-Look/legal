@@ -59,18 +59,18 @@ function CourtroomInner() {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-muted/30 to-background">
-      {/* Courtroom header — dark bar like a courtroom bench */}
-      <div className="bg-stone-200 dark:bg-stone-800 text-stone-900 dark:text-white px-5 py-3">
+      {/* Courtroom header */}
+      <div className="border-b border-border/60 bg-background px-5 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-amber-600/20 flex items-center justify-center">
-              <Landmark className="w-4.5 h-4.5 text-amber-400" />
+            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+              <Landmark className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-bold truncate">
+              <h2 className="text-sm font-bold truncate text-foreground">
                 {config?.caseName}
               </h2>
-              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+              <p className="text-[11px] text-muted-foreground">
                 {config?.userRole === "plaintiff"
                   ? "Appearing for the Plaintiff"
                   : "Appearing for the Defense"}
@@ -84,7 +84,7 @@ function CourtroomInner() {
               variant="ghost"
               size="sm"
               onClick={reset}
-              className="text-stone-500 hover:text-stone-900 hover:bg-stone-300 dark:text-stone-400 dark:hover:text-white dark:hover:bg-stone-700"
+              className="text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
               End Session
