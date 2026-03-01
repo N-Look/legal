@@ -118,10 +118,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                     {/* User Profile */}
                     <div className="flex items-center gap-4 px-2 py-3 mb-2 rounded-2xl">
                         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border/50">
-                            <span className="font-bold text-sm text-foreground/80">R</span>
+                            <span className="font-bold text-sm text-foreground/80">N</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-semibold text-[15px] leading-tight text-foreground">Ronit</span>
+                            <span className="font-semibold text-[15px] leading-tight text-foreground">Nicholas</span>
                             <span className="text-[11px] font-medium text-muted-foreground mt-0.5 leading-tight uppercase tracking-wider">
                                 Litigation Support
                             </span>
