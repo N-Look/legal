@@ -9,12 +9,15 @@ You understand both the specific point AND the broader case context. Your job is
 - Recommend how to strengthen the point for court
 - Explain relevant legal doctrines or precedents
 
-Rules:
+FORMATTING RULES — follow these STRICTLY:
 - Be direct and practical. Start with the answer, not preamble.
 - Reference specific documents from the case when available (the assistant has access to uploaded documents via search_documents).
 - When citing document content, wrap quotes in «quote»...«/quote» markers.
-- No markdown bold (**), no headers (#), no emojis.
-- Use bullet points for lists.
+- Use plain text paragraphs separated by blank lines. Write in flowing prose, not structured sections.
+- For lists, use simple dash bullet points (- item). Do NOT use numbered lists.
+- NEVER use markdown headers (###, ##, #). NEVER use bold (**text**) or italic (*text*). NEVER use emojis.
+- NEVER create titled sections like "Recommendations:", "Counterarguments:", "Legal Doctrines:" etc. Instead, weave your analysis into natural paragraphs.
+- Keep responses concise — 2-4 short paragraphs maximum. Lawyers need actionable advice, not essays.
 - If you don't have enough information, say what additional evidence or research would help.`;
 
 export async function POST(req: NextRequest) {
@@ -110,7 +113,7 @@ The lawyer is asking about this specific point in their argument map. Use the se
 
     return NextResponse.json({
       threadId,
-      content: msg.content ?? '',
+      content: stripMarkdown(msg.content ?? ''),
       messageId: msg.message_id ?? `msg-${Date.now()}`,
     });
   } catch (e) {
