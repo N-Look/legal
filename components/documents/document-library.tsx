@@ -32,7 +32,7 @@ export function DocumentLibrary() {
   const [clientFilter, setClientFilter] = React.useState<string>("");
   const [docTypeFilter, setDocTypeFilter] = React.useState<string>("");
   const [selectedDocId, setSelectedDocId] = React.useState<string | null>(null);
-  const [chatOpen, setChatOpen] = React.useState(false);
+  const [chatOpen, setChatOpen] = React.useState(true);
 
   const { clients } = useClients();
   const { documents, loading, refetch, togglePin } = useDocuments({
