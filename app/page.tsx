@@ -406,7 +406,7 @@ export default function LandingPage() {
                             <h3 className="font-semibold text-lg mb-2">Matter Scoping</h3>
                             <p className="text-primary-foreground/80 text-sm">Data strictly partitioned by client and matter. Zero cross-contamination risks.</p>
                         </div>
-                        <div>
+                        <div
                             <Users className="w-8 h-8 mb-4 opacity-80" />
                             <h3 className="font-semibold text-lg mb-2">Access Control</h3>
                             <p className="text-primary-foreground/80 text-sm">SSO integration with role-based permissions tailored for attorneys, paralegals, and admins.</p>
