@@ -563,6 +563,17 @@ async function querySingleAssistantExpand(
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
+  // Set the structured expand system prompt on the assistant
+  try {
+    await fetch(`${baseUrl}/assistants/${assistantId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      body: JSON.stringify({ system_prompt: SYSTEM_PROMPT }),
+    });
+  } catch (e) {
+    console.error('[map/expand] Failed to update assistant prompt:', e);
+  }
+
   const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -570,7 +581,14 @@ async function querySingleAssistantExpand(
   });
   const thread = await threadRes.json();
 
-  const content = `I am building an argument map for this legal claim:\n"${claim}"\n\nI need to dig deeper into this specific point:\n**${nodeLabel}**\n${nodeDescription}\n\nReturn 2-5 sub-points that expand on this specific argument. Use uploaded documents where relevant, AND apply general legal reasoning (relevant doctrines, tests, counterarguments, evidentiary considerations). You MUST return the \`\`\`map-nodes JSON block with at least 2 nodes. Do NOT say "no relevant information found."`;
+  const content = `I am building an argument map for this legal claim:
+"${claim}"
+
+I need to dig deeper into this specific point:
+**${nodeLabel}**
+${nodeDescription}
+
+Return 2-5 sub-points that expand on this specific argument. Include a MIX of nodeTypes — some "supporting" (relationship: "supports"), some "opposing" (relationship: "contradicts"), and optionally "context" or "sub-argument". Do NOT make everything the same type. Use uploaded documents where relevant, AND apply general legal reasoning. You MUST return the \`\`\`map-nodes JSON block with at least 2 nodes. Do NOT say "no relevant information found."`;
 
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
@@ -585,7 +603,9 @@ async function querySingleAssistantExpand(
   }
 
   const msg = await msgRes.json();
-  return parseExpandResponse(msg.content ?? '');
+  const raw: string = msg.content ?? '';
+  console.log(`[map/expand] Raw response length: ${raw.length}, first 200 chars:`, raw.slice(0, 200));
+  return parseExpandResponse(raw);
 }
 
 async function queryMultipleAssistantsExpand(

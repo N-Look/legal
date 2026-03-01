@@ -739,7 +739,7 @@ function ArgumentMapInner() {
   }, [handleExpand, setNodes, setEdges, fitView, indexedDocCount]);
 
   return (
-    <div className="flex -m-8 h-[calc(100%+4rem)]">
+    <div className="flex -m-8 h-[calc(100%+4rem)] relative">
       {/* Left panel */}
       <ClaimInput
         onAnalyze={handleAnalyze}
@@ -796,7 +796,7 @@ function ArgumentMapInner() {
         )}
       </div>
 
-      {/* Right detail panel with embedded chat */}
+      {/* Full-screen detail overlay */}
       {selectedNode && (
         <NodeDetailPanel
           node={selectedNode}

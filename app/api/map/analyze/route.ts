@@ -369,6 +369,17 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
+  // Set the structured argument map system prompt on the assistant
+  try {
+    await fetch(`${baseUrl}/assistants/${assistantId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      body: JSON.stringify({ system_prompt: SYSTEM_PROMPT }),
+    });
+  } catch (e) {
+    console.error('[map/analyze] Failed to update assistant prompt:', e);
+  }
+
   const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -380,7 +391,11 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({
-      content: `Build a comprehensive argument map for the following legal claim. Use uploaded documents where relevant, AND apply general legal reasoning (duty of care, breach, causation, damages, procedural defenses, etc.) to create a full map with 8-14 nodes covering both sides of the argument.\n\nCLAIM: "${claim}"\n\nIMPORTANT: You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes. Do NOT say "no relevant information found." Even if documents don't directly match, use legal analysis to build the map.`,
+      content: `Build a comprehensive argument map for the following legal claim. Use uploaded documents where relevant, AND apply general legal reasoning (duty of care, breach, causation, damages, procedural defenses, etc.) to create a full map with 8-14 nodes covering both sides of the argument.
+
+CLAIM: "${claim}"
+
+IMPORTANT: You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes covering BOTH sides — at least 3 "supporting" (nodeType: "supporting", relationship: "supports") and at least 3 "opposing" (nodeType: "opposing", relationship: "contradicts"). Do NOT make everything "context". Do NOT say "no relevant information found." Even if documents don't directly match, use legal analysis to build the map.`,
       memory: 'auto',
       send_to_llm: true,
     }),
@@ -394,8 +409,18 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
 
   const msg = await msgRes.json();
   const raw: string = msg.content ?? '';
+  console.log(`[map/analyze] Raw response length: ${raw.length}, first 200 chars:`, raw.slice(0, 200));
 
-  return parseAnalysisResponse(raw);
+  const result = parseAnalysisResponse(raw);
+  const typeCounts = result.nodes.reduce((acc, n) => {
+    acc[n.nodeType] = (acc[n.nodeType] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  console.log(`[map/analyze] Parsed ${result.nodes.length} nodes:`, typeCounts);
+  if (result.nodes.length > 0) {
+    console.log(`[map/analyze] First node:`, JSON.stringify(result.nodes[0]).slice(0, 200));
+  }
+  return result;
 }
 
 async function queryMultipleAssistants(claim: string, assistantIds: string[]): Promise<{ nodes: AnalysisNode[]; summary: string }> {
