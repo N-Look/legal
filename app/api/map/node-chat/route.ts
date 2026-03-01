@@ -139,3 +139,22 @@ function getMockResponse(nodeLabel: string, message: string): string {
 
   return `This is an important point in the argument map. Here are my observations:\n\nStrengths:\n- The factual basis appears well-documented\n- This connects logically to the broader claim\n\nWeaknesses:\n- The opposing side could challenge the interpretation of the evidence\n- Additional corroborating evidence would strengthen the position\n\nRecommendation: Focus on building a clear chain of evidence from this point to the central claim. Consider what counterarguments the opposing counsel might raise and prepare responses.`;
 }
+
+function stripMarkdown(text: string): string {
+  return text
+    // Remove markdown headers (### Header → Header)
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold (**text** or __text__)
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/__(.*?)__/g, '$1')
+    // Remove italic (*text* or _text_) — careful not to match list dashes
+    .replace(/(?<!\w)\*(?!\s)(.*?)(?<!\s)\*(?!\w)/g, '$1')
+    .replace(/(?<!\w)_(?!\s)(.*?)(?<!\s)_(?!\w)/g, '$1')
+    // Remove inline code (`code`)
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove horizontal rules (---, ***, ___)
+    .replace(/^[-*_]{3,}\s*$/gm, '')
+    // Collapse 3+ consecutive newlines to 2
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
