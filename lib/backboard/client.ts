@@ -1,6 +1,6 @@
 import { BackboardClient } from 'backboard-sdk';
 import type { Document as BBDocument } from 'backboard-sdk';
-import { writeFile, unlink, mkdir } from 'fs/promises';
+import { writeFile, unlink, mkdir, rmdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import type { MessageResponse } from 'backboard-sdk';
@@ -48,6 +48,21 @@ export async function updateAssistantPrompt(assistantId: string, systemPrompt: s
   await writeClient.updateAssistant(assistantId, { system_prompt: systemPrompt });
 }
 
+// A plain assistant with no documents — used for direct-context chat so that
+// Backboard doesn't inject the search_documents tool.
+let _plainAssistantId: string | null = null;
+
+export async function getOrCreatePlainAssistant(systemPrompt: string): Promise<string> {
+  if (_plainAssistantId) return _plainAssistantId;
+
+  const result = await writeClient.createAssistant({
+    name: `_doc-chat-plain-${Date.now()}`,
+    system_prompt: systemPrompt,
+  });
+  _plainAssistantId = result.assistantId;
+  return _plainAssistantId;
+}
+
 export async function createThread(assistantId: string): Promise<BackboardThread> {
   const result = await writeClient.createThread(assistantId);
   return {
@@ -78,6 +93,7 @@ export async function uploadDocument(
     };
   } finally {
     await unlink(tempPath).catch(() => {});
+    await rmdir(tempDir).catch(() => {});
   }
 }
 
