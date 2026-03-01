@@ -1,59 +1,85 @@
-# Lex AI Landing Page
+# ⚖️ Lex AI
 
-A premium, production-ready landing page tailored for a legal operations/KM/litigation support audience. Built with Next.js (App Router), Tailwind CSS, framer-motion, and shadcn/ui.
+**Lex AI is an advanced, AI-powered legal research and case intelligence platform.** It transforms raw, chaotic case documents into structured, instantly searchable, and interactive intelligence. Designed specifically for legal professionals, Lex AI provides AI-driven insights that are strictly grounded in your actual uploaded documents and verified legal databases, eliminating hallucinations and saving countless hours of manual review.
 
-## Features
+---
 
-- **Semantic sections:** Structured for trust and rigor (Hero, Problem vs Solution, Governance, Outputs, etc.).
-- **Smooth Animations:** Integrated with `framer-motion` for scroll-triggered fades, translation effects, and a highly polished sticky hero section that scales down smoothly on scroll. It automatically stops the animations if the user has `prefers-reduced-motion` enabled.
-- **Responsive:** Mobile-friendly UI (collapsing nav, responsive grid).
+## ✨ Core Features
 
-## How to Run
+*   **📚 Centralized Document Library**: One central, instantly searchable library for all case documents, organized by client and matter.
+*   **💬 Grounded AI Document Chat**: Ask complex questions about your uploaded documents and get AI answers that are *grounded in the text*. Every claim includes clickable quote references that jump exactly to the source location in the document.
+*   **🗺️ Interactive Argument Mapping**: Visualize your case as an interactive graph. See exactly how claims, supporting evidence, and contradictions connect across all your documents.
+*   **🔍 Verified Citation Search**: Search the CanLII database using natural language. Lex AI analyzes the results, extracts key passages, and provides verified legal citations—with a full audit trail and zero hallucinations.
+*   **💼 Authority Binder Export**: Automatically build curated binders of key authorities and export them as structured, audit-ready JSON packs.
+*   **🔒 Enterprise-Grade Security & Governance**: Built for stringent infosec reviews. Features include strict matter scoping, SSO-ready access control, immutable audit logs, and automated retention policies.
 
-1. **Install dependencies:**
-   \`\`\`bash
-   npm install
-   \`\`\`
-   Note: `framer-motion` is required for the animations.
+## 🛠️ Tech Stack
 
-2. **Start the development server:**
-   \`\`\`bash
-   npm run dev
-   \`\`\`
+This project is a modern, full-stack web application built with the following technologies:
 
-3. **View the site:**
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+*   **Framework**: [Next.js](https://nextjs.org/) (App Router)
+*   **Language**: [TypeScript](https://www.typescriptlang.com/)
+*   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+*   **UI Components**: [shadcn/ui](https://ui.shadcn.com/), [Radix UI](https://www.radix-ui.com/)
+*   **Animations**: [Framer Motion](https://www.framer.com/motion/)
+*   **Icons**: [Lucide React](https://lucide.dev/)
 
-## Where to Edit Copy
+## 🚀 Getting Started
 
-- The content of the landing page is centralized directly in `app/page.tsx`.
-- Look for arrays such as `steps` and `features` to quickly modify the "How It Works" and "Feature Grid" content.
-- Update the page headlines directly in the HTML structure (e.g., search for `The Defensible Authority Companion`).
-- All `{{PROJECT_NAME}}` placeholders have been replaced with **Lex AI**.
+Follow these instructions to set up the project locally.
 
-## How to Swap Screenshots/Branding
+### Prerequisites
 
-- **Logos:** The text logo is defined in the `<nav>` section (`Top Nav`). Replace this with your actual SVG logo.
-- **Mock UI:** The "floating preview card" in the Hero section is built natively using React components for a premium feel. To update its contents, modify the `Card` component inside the hero.
-- **Colors:** The theme relies entirely on Tailwind + shadcn CSS tokens (`primary`, `destructive`, `background`, `card`). You can tune these in `globals.css` (see the `:root` and `.dark` blocks).
+Ensure you have [Node.js](https://nodejs.org/) (v18+) and `npm` (or `pnpm`, `yarn`) installed.
 
-## Scroll Effects and Tuning
+### Installation
 
-The scroll effects are driven by `framer-motion`'s `useScroll` and `useTransform` hooks. You can adjust the parameters in `app/page.tsx`:
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/lex-ai.git
+    cd lex-ai
+    ```
 
-```tsx
-// Adjust the range (e.g., [0, 400]) to determine when the animation starts/stops
-// Adjust the output array to define the intensity of the effect
-const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
-const heroScale = useTransform(scrollY, [0, 400], [1, 0.95]);
-const previewY = useTransform(scrollY, [0, 400], [0, 50]);
-const previewBlur = useTransform(scrollY, [0, 400], ["blur(0px)", "blur(8px)"]);
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up Environment Variables**
+    Create a `.env.local` file in the root directory and add the necessary environment variables (e.g., Database URLs, AI Provider API Keys, Authentication secrets).
+    ```env
+    # Example .env.local
+    NEXT_PUBLIC_APP_URL="http://localhost:3000"
+    ```
+
+4.  **Run the Development Server**
+    ```bash
+    npm run dev
+    ```
+
+5.  **View the Application**
+    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 📂 Project Structure
+
+```
+.
+├── app/                  # Next.js App Router (Pages, Layouts, API routes)
+│   ├── api/              # Backend API routes (Document processing, search, embeddings)
+│   ├── dashboard/        # Main application interface and workspace
+│   └── page.tsx          # Public landing page
+├── components/           # Reusable React components (UI elements, Layouts)
+│   ├── documents/        # PDF & DOCX viewers integrations
+│   └── ui/               # shadcn/ui generic components
+├── lib/                  # Utility functions, helpers, and configurations
+├── public/               # Static assets (images, fonts, formatting)
+└── styles/               # Global CSS files (Tailwind configuration)
 ```
 
-To adjust the fade-in speeds for sections lower down on the page, alter the `fadeUpVariant`:
-```tsx
-const fadeUpVariant = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
-};
-```
+## 📜 Legal Disclaimer
+
+**Not legal advice.** The output generated by Lex AI requires human review by a qualified attorney. The platform acts as a research assistant and does not replace professional legal counsel.
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
