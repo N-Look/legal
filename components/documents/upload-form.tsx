@@ -180,12 +180,12 @@ export function UploadForm() {
                   <Select
                     value={matterId}
                     onValueChange={setMatterId}
-                    disabled={!selectedClient}
+                    disabled={!selectedClient && !isCreatingNewClient}
                   >
                     <SelectTrigger className="rounded-xl w-full">
                       <SelectValue
                         placeholder={
-                          selectedClient
+                          selectedClient || isCreatingNewClient
                             ? "Select a matter"
                             : "Select a client first"
                         }

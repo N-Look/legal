@@ -40,6 +40,26 @@ export async function GET(
         status_message: bb.status_message ?? null,
       };
 
+      // Sync status back to DB if Backboard reports a different status
+      if (bb.status && bb.status !== doc.backboard_status) {
+        const newStatus = bb.status === 'indexed' ? 'indexed'
+          : bb.status === 'error' ? 'error'
+          : bb.status === 'processing' ? 'processing'
+          : 'pending';
+        await supabaseAdmin
+          .from('documents')
+          .update({ backboard_status: newStatus })
+          .eq('id', id);
+        doc.backboard_status = newStatus;
+
+        if (newStatus === 'indexed' || newStatus === 'error') {
+          await supabaseAdmin
+            .from('upload_sessions')
+            .update({ status: newStatus === 'indexed' ? 'completed' : 'error' })
+            .eq('document_id', id);
+        }
+      }
+
       // Use cached summary from DB if available
       if (doc.backboard_summary) {
         backboard_details.summary = doc.backboard_summary;

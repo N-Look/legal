@@ -156,6 +156,56 @@ function DocumentViewer({
 
 // ─── Chat Message Bubble ────────────────────────────────────────────────────
 
+/**
+ * Renders a text segment, converting quoted section/heading references
+ * (e.g. "List of Witnesses" or 'Exhibit 1') into clickable links that
+ * jump to that text in the PDF.
+ */
+function TextWithSectionLinks({
+  text,
+  onJump,
+}: {
+  text: string;
+  onJump?: (text: string) => void;
+}) {
+  if (!onJump) return <>{text}</>;
+
+  // Match text in "double quotes" or 'single quotes' that looks like a
+  // section heading (starts with a capital letter, at least 3 chars)
+  const parts: React.ReactNode[] = [];
+  const regex = /["\u201C]([A-Z][^"\u201D]{2,})["\u201D]/g;
+  let last = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) {
+      parts.push(text.slice(last, match.index));
+    }
+    const section = match[1];
+    parts.push(
+      <button
+        key={match.index}
+        type="button"
+        className="inline text-primary underline underline-offset-2 decoration-primary/40 hover:decoration-primary/80 transition-colors cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onJump(section);
+        }}
+        title={`Jump to "${section}" in document`}
+      >
+        &ldquo;{section}&rdquo;
+      </button>
+    );
+    last = match.index + match[0].length;
+  }
+
+  if (last < text.length) {
+    parts.push(text.slice(last));
+  }
+
+  return parts.length > 1 ? <>{parts}</> : <>{text}</>;
+}
+
 function ChatBubble({ message, onQuoteClick }: { message: ChatMessage; onQuoteClick?: (quote: string) => void }) {
   const isUser = message.role === "user";
   const segments = isUser
@@ -187,7 +237,9 @@ function ChatBubble({ message, onQuoteClick }: { message: ChatMessage; onQuoteCl
               <span className="underline decoration-primary/30 underline-offset-2 group-hover/quote:decoration-primary/60 transition-colors">{seg.content}</span>
             </blockquote>
           ) : (
-            <span key={i}>{seg.content}</span>
+            <span key={i}>
+              <TextWithSectionLinks text={seg.content} onJump={onQuoteClick} />
+            </span>
           )
         )}
       </div>
@@ -344,6 +396,16 @@ export function DocumentDetailModal({
       fetchDetails(documentId);
     }
   }, [documentId, fetchDetails]);
+
+  // Auto-refresh when document is still processing
+  React.useEffect(() => {
+    if (!documentId || !details) return;
+    const status = details.backboard_status;
+    if (status === 'processing' || status === 'uploading') {
+      const interval = setInterval(() => fetchDetails(documentId), 10000);
+      return () => clearInterval(interval);
+    }
+  }, [documentId, details?.backboard_status, fetchDetails]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {

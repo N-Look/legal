@@ -42,6 +42,17 @@ export function useDocuments(filters: DocumentListFilters = {}): UseDocumentsRet
     fetchDocuments();
   }, [fetchDocuments]);
 
+  // Auto-refresh when any documents are still processing
+  useEffect(() => {
+    const hasProcessing = documents.some(
+      (d) => d.backboard_status === 'processing' || d.backboard_status === 'uploading'
+    );
+    if (!hasProcessing) return;
+
+    const interval = setInterval(fetchDocuments, 10000);
+    return () => clearInterval(interval);
+  }, [documents, fetchDocuments]);
+
   const togglePin = useCallback(async (id: string, pinned: boolean) => {
     try {
       const res = await fetch(`/api/documents/${id}`, {

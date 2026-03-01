@@ -30,6 +30,26 @@ export async function GET(
         file_size_bytes: bbDoc.file_size_bytes ?? null,
         status: bbDoc.status,
       };
+
+      // Sync status back to DB if it changed
+      if (bbDoc.status && bbDoc.status !== data.backboard_status) {
+        const newStatus = bbDoc.status === 'indexed' ? 'indexed'
+          : bbDoc.status === 'error' ? 'error'
+          : bbDoc.status === 'processing' ? 'processing'
+          : 'pending';
+        await supabaseAdmin
+          .from('documents')
+          .update({ backboard_status: newStatus })
+          .eq('id', id);
+        data.backboard_status = newStatus;
+
+        if (newStatus === 'indexed' || newStatus === 'error') {
+          await supabaseAdmin
+            .from('upload_sessions')
+            .update({ status: newStatus === 'indexed' ? 'completed' : 'error' })
+            .eq('document_id', id);
+        }
+      }
     } catch (e) {
       console.error(`[document detail] Failed to fetch Backboard details for ${id}:`, e);
     }
@@ -78,10 +98,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
 
-  // Fetch document to get Backboard IDs and storage path
+  // Fetch document to get Backboard IDs, storage path, and client info
   const { data: doc, error: fetchError } = await supabaseAdmin
     .from('documents')
-    .select('backboard_assistant_id, backboard_document_id, storage_path')
+    .select('backboard_assistant_id, backboard_document_id, storage_path, client_id')
     .eq('id', id)
     .single();
 
@@ -116,6 +136,27 @@ export async function DELETE(
 
   if (deleteError) {
     return NextResponse.json({ error: deleteError.message }, { status: 500 });
+  }
+
+  // Clean up orphaned client (and its matters) if no documents remain
+  if (doc.client_id) {
+    const { count } = await supabaseAdmin
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .eq('client_id', doc.client_id);
+
+    if (count === 0) {
+      // Delete matters first (they reference the client)
+      await supabaseAdmin
+        .from('matters')
+        .delete()
+        .eq('client_id', doc.client_id);
+
+      await supabaseAdmin
+        .from('clients')
+        .delete()
+        .eq('id', doc.client_id);
+    }
   }
 
   return NextResponse.json({ success: true });

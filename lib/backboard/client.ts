@@ -33,12 +33,19 @@ function mapDocument(doc: BBDocument): BackboardDocument {
 }
 
 export async function createAssistant(name: string): Promise<BackboardAssistant> {
-  const result = await writeClient.createAssistant({ name });
+  const result = await writeClient.createAssistant({
+    name,
+    system_prompt: `You are a legal document assistant for "${name}". You have access to uploaded legal documents via the search_documents tool. ALWAYS use search_documents to find information before answering any question. Never answer from general knowledge — only use content retrieved from the documents. Include exact quotes from the documents to support your answers.`,
+  });
   return {
     assistant_id: result.assistantId,
     name: result.name,
     created_at: result.createdAt instanceof Date ? result.createdAt.toISOString() : String(result.createdAt),
   };
+}
+
+export async function updateAssistantPrompt(assistantId: string, systemPrompt: string): Promise<void> {
+  await writeClient.updateAssistant(assistantId, { system_prompt: systemPrompt });
 }
 
 export async function createThread(assistantId: string): Promise<BackboardThread> {
@@ -107,17 +114,18 @@ export async function sendMessage(
   threadId: string,
   content: string,
   options?: { llmProvider?: string; modelName?: string; memory?: string }
-): Promise<{ content: string; messageId: string }> {
+): Promise<{ content: string; messageId: string; retrievedFiles: string[] | null }> {
   const result = await writeClient.addMessage(threadId, {
     content,
     llmProvider: options?.llmProvider ?? 'anthropic',
     modelName: options?.modelName ?? 'claude-sonnet-4-6',
-    memory: options?.memory ?? 'Readonly',
+    memory: options?.memory ?? 'Auto',
     stream: false,
   }) as MessageResponse;
 
   return {
     content: result.content,
     messageId: result.messageId,
+    retrievedFiles: result.retrievedFiles ?? null,
   };
 }
