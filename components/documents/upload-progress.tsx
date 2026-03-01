@@ -9,6 +9,7 @@ const phaseLabels: Record<UploadPhase, string> = {
   validating: "Validating...",
   uploading: "Uploading document...",
   processing: "Processing & indexing...",
+  timeout: "Document uploaded",
   complete: "Upload complete!",
   error: "Upload failed",
 };
@@ -23,13 +24,10 @@ interface UploadProgressProps {
 export function UploadProgress({ phase, progress, error, onReset }: UploadProgressProps) {
   if (phase === "idle") return null;
 
-  // "complete" with an info message means "uploaded but still indexing"
-  const isStillIndexing = phase === "complete" && progress < 100 && error;
-
   return (
     <div className="flex flex-col gap-4 p-6 border border-border/60 rounded-2xl bg-background">
       <div className="flex items-center gap-3">
-        {isStillIndexing ? (
+        {phase === "timeout" ? (
           <Clock className="w-5 h-5 text-amber-500" />
         ) : phase === "complete" ? (
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
@@ -39,7 +37,7 @@ export function UploadProgress({ phase, progress, error, onReset }: UploadProgre
           <Loader2 className="w-5 h-5 text-primary animate-spin" />
         )}
         <span className="font-medium text-sm">
-          {isStillIndexing ? "Document uploaded" : phaseLabels[phase]}
+          {phaseLabels[phase]}
         </span>
       </div>
 
@@ -47,7 +45,7 @@ export function UploadProgress({ phase, progress, error, onReset }: UploadProgre
         <div
           className={`h-full rounded-full transition-all duration-500 ${
             phase === "error" ? "bg-destructive"
-              : isStillIndexing ? "bg-amber-500"
+              : phase === "timeout" ? "bg-amber-500"
               : phase === "complete" ? "bg-emerald-500"
               : "bg-primary"
           }`}
@@ -56,12 +54,12 @@ export function UploadProgress({ phase, progress, error, onReset }: UploadProgre
       </div>
 
       {error && (
-        <p className={`text-sm ${isStillIndexing ? "text-muted-foreground" : "text-destructive"}`}>
+        <p className={`text-sm ${phase === "timeout" ? "text-muted-foreground" : "text-destructive"}`}>
           {error}
         </p>
       )}
 
-      {(phase === "complete" || phase === "error") && (
+      {(phase === "complete" || phase === "error" || phase === "timeout") && (
         <Button variant="outline" onClick={onReset} className="w-fit rounded-xl">
           Upload Another
         </Button>

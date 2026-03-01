@@ -32,13 +32,14 @@ export function useUpload(): UseUploadReturn {
       onProgress: setProgress,
       onIndexed: () => {
         setPhase('complete');
+        setError(null);
       },
       onError: (msg) => {
         setPhase('error');
         setError(msg);
       },
       onTimeout: () => {
-        setPhase('complete');
+        setPhase('timeout');
         setError('Document uploaded — indexing is taking longer than expected. It will appear in your library once ready.');
       },
     });

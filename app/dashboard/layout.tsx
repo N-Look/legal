@@ -30,22 +30,25 @@ function UploadStatusPill() {
 
     if (phase === "idle") return null;
 
-    const isActive = phase !== "complete" && phase !== "error";
+    const isActive = phase !== "complete" && phase !== "error" && phase !== "timeout";
 
     return (
-        <div className={`mx-2 mt-2 rounded-2xl border px-4 py-3 text-xs flex flex-col gap-2 transition-colors ${
-            phase === "complete"
-                ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30"
-                : phase === "error"
+        <div className={`mx-2 mt-2 rounded-2xl border px-4 py-3 text-xs flex flex-col gap-2 transition-colors ${phase === "complete"
+            ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30"
+            : phase === "error"
                 ? "border-destructive/30 bg-destructive/5"
-                : "border-border/60 bg-background"
-        }`}>
+                : phase === "timeout"
+                    ? "border-amber-200 bg-amber-50 dark:bg-amber-950/30"
+                    : "border-border/60 bg-background"
+            }`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                     {phase === "complete" ? (
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     ) : phase === "error" ? (
                         <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                    ) : phase === "timeout" ? (
+                        <Loader2 className="w-3.5 h-3.5 text-amber-500 animate-spin shrink-0" />
                     ) : (
                         <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
                     )}
@@ -53,10 +56,12 @@ function UploadStatusPill() {
                         {phase === "complete"
                             ? "Indexed"
                             : phase === "error"
-                            ? "Failed"
-                            : phase === "processing"
-                            ? "Indexing…"
-                            : "Uploading…"}
+                                ? "Failed"
+                                : phase === "timeout"
+                                    ? "Still indexing…"
+                                    : phase === "processing"
+                                        ? "Indexing…"
+                                        : "Uploading…"}
                     </span>
                 </div>
                 {!isActive && (
@@ -113,10 +118,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                     {/* User Profile */}
                     <div className="flex items-center gap-4 px-2 py-3 mb-2 rounded-2xl">
                         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border/50">
-                            <span className="font-bold text-sm text-foreground/80">JS</span>
+                            <span className="font-bold text-sm text-foreground/80">R</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-semibold text-[15px] leading-tight text-foreground">John Smith</span>
+                            <span className="font-semibold text-[15px] leading-tight text-foreground">Ronit</span>
                             <span className="text-[11px] font-medium text-muted-foreground mt-0.5 leading-tight uppercase tracking-wider">
                                 Litigation Support
                             </span>

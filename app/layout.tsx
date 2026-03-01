@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lex AI - The Defensible Authority Companion",
-  description: "Lex AI automatically extracts, resolves, and fetches legal citations from your drafts, generating a court-ready, fully-auditable package.",
+  title: "Lex AI - Your Intelligent Case Companion",
+  description: "Upload legal documents, chat with AI about your case, visualize argument maps, and search citations — all in one platform built for legal professionals.",
 };
 
 export default function RootLayout({
