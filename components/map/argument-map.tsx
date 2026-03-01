@@ -623,7 +623,7 @@ function ArgumentMapInner() {
                 source: newNodes[newIdx].id,
                 target: existingIds[existIdx],
                 type: 'default',
-                style: { stroke: 'rgba(0,0,0,0.08)', strokeWidth: 0.5, strokeDasharray: '4 3' },
+                style: { stroke: 'rgba(0,0,0,0.05)', strokeWidth: 0.5, strokeDasharray: '4 3' },
                 data: { relationship: 'provides-context', reasoning: `Connected via: ${link}` },
               });
             }
