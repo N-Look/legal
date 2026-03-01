@@ -100,7 +100,7 @@ export default function LandingPage() {
                         <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
                         <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
                         <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
-                        <Link href="/dashboard">
+                        <Link href="/login">
                             <Button size="sm" className="rounded-full">Go to App</Button>
                         </Link>
                     </div>
@@ -120,7 +120,7 @@ export default function LandingPage() {
                         <a href="#how-it-works" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>How it works</a>
                         <a href="#features" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Features</a>
                         <a href="#security" className="text-muted-foreground" onClick={() => setIsMobileMenuOpen(false)}>Security</a>
-                        <Link href="/dashboard" className="w-full mt-2 block" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/login" className="w-full mt-2 block" onClick={() => setIsMobileMenuOpen(false)}>
                             <Button className="w-full">Go to App</Button>
                         </Link>
                     </div>
@@ -160,7 +160,7 @@ export default function LandingPage() {
                             Upload documents, chat with AI about your case, map arguments visually, and search citations — all in one platform built for legal professionals.
                         </motion.p>
                         <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                            <Link href="/dashboard" className="contents">
+                            <Link href="/login" className="contents">
                                 <Button size="lg" className="rounded-full h-12 px-8 text-base">
                                     Go to App
                                     <ArrowRight className="ml-2 w-4 h-4" />
@@ -510,7 +510,7 @@ export default function LandingPage() {
                         Upload your first document, let AI index it, and start asking questions in minutes.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link href="/dashboard" className="contents">
+                        <Link href="/login" className="contents">
                             <Button size="lg" className="rounded-full h-12 px-8">
                                 Go to App
                                 <ArrowRight className="ml-2 w-4 h-4" />
