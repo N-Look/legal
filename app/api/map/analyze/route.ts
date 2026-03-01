@@ -17,13 +17,20 @@ IMPORTANT — always structure your response in this EXACT order:
 \`\`\`
 containing an array of 8-14 evidence/argument objects. Each object must have:
 - label (string, 5-10 words): short title for this piece of evidence or argument
-- description (string, 2-4 sentences): detailed analysis — include specific document quotes when available, or thorough legal reasoning when applying general principles
+- description (string, 5-10 sentences MINIMUM): a thorough legal analysis written as if briefing a senior partner. NEVER write generic descriptions like "Evaluate whether..." or "Assess the extent to which..." — those are instructions, not analysis. Instead, write SUBSTANTIVE content: cite specific exhibit numbers and document names, quote key passages from witness statements or depositions, reference exact dates and names of people involved, explain the legal significance, identify how opposing counsel might attack or leverage this point, and connect it to the elements of the cause of action. Every description should read like a paragraph from a legal memorandum, not a task description.
 - nodeType (string): one of "supporting" (helps the claim), "opposing" (hurts the claim), "context" (neutral background), or "sub-argument" (derivative argument)
 - relationship (string): one of "supports", "contradicts", "provides-context", or "sub-argument"
 - reasoning (string, 1 sentence): why this node matters to the overall argument
-- documentName (string): source document filename if from uploaded docs, or "Legal Analysis" if from general reasoning
+- documentName (string): the SPECIFIC source document filename from the uploaded files. Use the actual filename — never use generic labels like "Legal Analysis" or "Case Documents."
 - confidence (number 0-1): 0.8+ for document-backed evidence, 0.5-0.8 for legal reasoning, 0.3-0.5 for speculative arguments
 - connectsTo (optional array of strings): labels of OTHER nodes in your response that this node also logically connects to. Use this when a conclusion draws from multiple pieces of evidence, or when two exhibits support the same reasoning node. This creates a reasoning NETWORK, not just a tree.
+
+CRITICAL RULES FOR DESCRIPTIONS:
+- NEVER write descriptions that start with verbs like "Evaluate", "Assess", "Determine", "Analyze", "Consider", or "Examine" — those are instructions, not analysis.
+- ALWAYS write descriptions that STATE FACTS and MAKE ARGUMENTS: "On October 12, Counselor Sanchez emailed..." not "Evaluate the counselor's communication..."
+- ALWAYS reference specific people by name, specific dates, specific exhibit numbers, and specific document titles.
+- If documents contain relevant quotes, include them directly in the description.
+- Each description should be substantial enough to fill a full paragraph in a legal brief.
 
 ALWAYS include a mix of:
 - At least 3 nodes supporting the claim
@@ -395,7 +402,10 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
 
 CLAIM: "${claim}"
 
-IMPORTANT: You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes covering BOTH sides — at least 3 "supporting" (nodeType: "supporting", relationship: "supports") and at least 3 "opposing" (nodeType: "opposing", relationship: "contradicts"). Do NOT make everything "context". Do NOT say "no relevant information found." Even if documents don't directly match, use legal analysis to build the map.`,
+IMPORTANT REQUIREMENTS:
+1. You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes covering BOTH sides — at least 3 "supporting" (nodeType: "supporting", relationship: "supports") and at least 3 "opposing" (nodeType: "opposing", relationship: "contradicts"). Do NOT make everything "context". Do NOT say "no relevant information found."
+2. DESCRIPTIONS MUST BE SUBSTANTIVE — write 5-10 sentences per node as if you are drafting a legal memorandum. Reference specific people by name, specific dates, specific exhibit numbers, and quote directly from documents when available. NEVER write generic descriptions like "Evaluate whether the school met the standard of care" — instead write "On September 28, 2023, Teacher Fisher submitted a formal memo (Exhibit 4) stating..." Descriptions that begin with instructional verbs (Evaluate, Assess, Determine, Consider, Examine) are WRONG — rewrite them as factual analysis.
+3. For documentName, use the ACTUAL filename from the uploaded documents — never use generic labels like "Legal Analysis" or "Case Documents."`,
       memory: 'auto',
       send_to_llm: true,
     }),
