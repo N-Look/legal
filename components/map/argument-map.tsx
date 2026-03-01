@@ -17,6 +17,7 @@ import {
   addEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import './map-animations.css';
 
 import type { MapNodeData, MapEdgeData, AnalysisNode, AnalyzeResponse, ExpandResponse } from '@/types/argument-map';
 import MapNodeComponent from './map-node';
@@ -26,8 +27,15 @@ import { MapToolbar } from './map-toolbar';
 
 const nodeTypes = { mapNode: MapNodeComponent };
 
-/* ─── Edge colors by relationship ─── */
+/* ─── Edge colors by relationship (softer palette) ─── */
 const EDGE_COLORS: Record<string, string> = {
+  supports: 'rgba(22,163,74,0.4)',
+  contradicts: 'rgba(220,38,38,0.4)',
+  'provides-context': 'rgba(217,119,6,0.35)',
+  'sub-argument': 'rgba(124,58,237,0.35)',
+};
+
+const EDGE_MARKER_COLORS: Record<string, string> = {
   supports: '#16a34a',
   contradicts: '#dc2626',
   'provides-context': '#d97706',
@@ -234,13 +242,13 @@ function buildHardcodedGraph(onExpand: (id: string) => void): { nodes: Node<MapN
     source: he.source,
     target: he.target,
     type: 'default',
-    animated: he.animated ?? false,
+    animated: !he.dashed,
     style: he.dashed
-      ? { stroke: 'rgba(0,0,0,0.08)', strokeWidth: 0.5, strokeDasharray: '4 3' }
-      : { stroke: EDGE_COLORS[he.relationship] ?? '#94a3b8', strokeWidth: 1 },
+      ? { stroke: 'rgba(0,0,0,0.06)', strokeWidth: 0.5, strokeDasharray: '4 3' }
+      : { stroke: EDGE_COLORS[he.relationship] ?? 'rgba(148,163,184,0.3)', strokeWidth: 1 },
     markerEnd: he.dashed
       ? undefined
-      : { type: MarkerType.ArrowClosed, width: 8, height: 8, color: EDGE_COLORS[he.relationship] ?? '#94a3b8' },
+      : { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_MARKER_COLORS[he.relationship] ?? '#94a3b8' },
     data: {
       relationship: he.relationship,
       reasoning: he.reasoning ?? '',
@@ -363,8 +371,9 @@ function buildLayeredDAG(
       source: ag.id,
       target: 'claim-root',
       type: 'default',
-      style: { stroke: EDGE_COLORS[ag.key] ?? '#94a3b8', strokeWidth: 1 },
-      markerEnd: { type: MarkerType.ArrowClosed, width: 8, height: 8, color: EDGE_COLORS[ag.key] ?? '#94a3b8' },
+      animated: true,
+      style: { stroke: EDGE_COLORS[ag.key] ?? 'rgba(148,163,184,0.3)', strokeWidth: 1.5 },
+      markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_MARKER_COLORS[ag.key] ?? '#94a3b8' },
       data: { relationship: ag.key as MapEdgeData['relationship'], reasoning: '' },
     });
 
@@ -402,8 +411,9 @@ function buildLayeredDAG(
         source: nodeId,
         target: ag.id,
         type: 'default',
-        style: { stroke: EDGE_COLORS[an.relationship] ?? '#94a3b8', strokeWidth: 1 },
-        markerEnd: { type: MarkerType.ArrowClosed, width: 8, height: 8, color: EDGE_COLORS[an.relationship] ?? '#94a3b8' },
+        animated: true,
+        style: { stroke: EDGE_COLORS[an.relationship] ?? 'rgba(148,163,184,0.3)', strokeWidth: 1 },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_MARKER_COLORS[an.relationship] ?? '#94a3b8' },
         data: { relationship: an.relationship, reasoning: an.reasoning },
       });
     });
@@ -438,8 +448,8 @@ function buildLayeredDAG(
         source: sourceId,
         target: targetId,
         type: 'default',
-        style: { stroke: EDGE_COLORS[an.relationship] ?? '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
-        markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_COLORS[an.relationship] ?? '#94a3b8' },
+        style: { stroke: EDGE_COLORS[an.relationship] ?? 'rgba(148,163,184,0.2)', strokeWidth: 0.8, strokeDasharray: '6 3' },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 5, height: 5, color: EDGE_MARKER_COLORS[an.relationship] ?? '#94a3b8' },
         data: { relationship: an.relationship, reasoning: an.reasoning },
       });
     }
@@ -463,7 +473,7 @@ function buildLayeredDAG(
           source: idA,
           target: idB,
           type: 'default',
-          style: { stroke: 'rgba(0,0,0,0.08)', strokeWidth: 0.5, strokeDasharray: '4 3' },
+          style: { stroke: 'rgba(0,0,0,0.05)', strokeWidth: 0.5, strokeDasharray: '4 3' },
           data: { relationship: 'provides-context' as const, reasoning: `Connected via: ${link}` },
         });
       }
@@ -556,8 +566,9 @@ function ArgumentMapInner() {
           source: nodeId,
           target: nn.id,
           type: 'default',
-          style: { stroke: EDGE_COLORS[data.nodes[i].relationship] ?? '#94a3b8', strokeWidth: 1 },
-          markerEnd: { type: MarkerType.ArrowClosed, width: 8, height: 8, color: EDGE_COLORS[data.nodes[i].relationship] ?? '#94a3b8' },
+          animated: true,
+          style: { stroke: EDGE_COLORS[data.nodes[i].relationship] ?? 'rgba(148,163,184,0.3)', strokeWidth: 1 },
+          markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_MARKER_COLORS[data.nodes[i].relationship] ?? '#94a3b8' },
           data: { relationship: data.nodes[i].relationship, reasoning: data.nodes[i].reasoning },
         }));
 
@@ -587,8 +598,8 @@ function ArgumentMapInner() {
               source: sourceId,
               target: targetId,
               type: 'default',
-              style: { stroke: EDGE_COLORS[an.relationship] ?? '#94a3b8', strokeWidth: 1, strokeDasharray: '6 3' },
-              markerEnd: { type: MarkerType.ArrowClosed, width: 6, height: 6, color: EDGE_COLORS[an.relationship] ?? '#94a3b8' },
+              style: { stroke: EDGE_COLORS[an.relationship] ?? 'rgba(148,163,184,0.2)', strokeWidth: 0.8, strokeDasharray: '6 3' },
+              markerEnd: { type: MarkerType.ArrowClosed, width: 5, height: 5, color: EDGE_MARKER_COLORS[an.relationship] ?? '#94a3b8' },
               data: { relationship: an.relationship, reasoning: an.reasoning },
             });
           }
