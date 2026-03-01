@@ -26,6 +26,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [rendered, setRendered] = useState(false);
 
     // Store references to text layer data for each page
     const textLayerDataRef = useRef<
@@ -151,14 +152,14 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
 
     // ── React to highlightText prop changes ─────────────────────────────────
     useEffect(() => {
-      if (highlightText) {
-        // Small delay to ensure text layers are rendered
-        const t = setTimeout(() => scrollToText(highlightText), 150);
-        return () => clearTimeout(t);
-      } else {
+      if (!highlightText) {
         clearHighlights();
+        return;
       }
-    }, [highlightText, scrollToText, clearHighlights]);
+      if (!rendered) return; // Wait until text layers are ready
+      const t = setTimeout(() => scrollToText(highlightText), 50);
+      return () => clearTimeout(t);
+    }, [highlightText, rendered, scrollToText, clearHighlights]);
 
     // ── Render PDF pages + text layers ──────────────────────────────────────
     useEffect(() => {
@@ -242,7 +243,10 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
             });
           }
 
-          if (!cancelled) setLoading(false);
+          if (!cancelled) {
+            setLoading(false);
+            setRendered(true);
+          }
         } catch {
           if (!cancelled) {
             setError(true);
@@ -251,6 +255,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
         }
       }
 
+      setRendered(false);
       render();
       return () => {
         cancelled = true;

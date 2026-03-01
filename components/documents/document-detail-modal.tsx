@@ -682,7 +682,10 @@ export function DocumentDetailModal({
                   <ChatSection
                     documentId={details.id}
                     backboardStatus={details.backboard_status}
-                    onQuoteClick={(quote) => setHighlightText(quote)}
+                    onQuoteClick={(quote) => {
+                      setHighlightText(null);
+                      requestAnimationFrame(() => setHighlightText(quote));
+                    }}
                   />
                 </TabsContent>
               </Tabs>
