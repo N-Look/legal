@@ -19,8 +19,9 @@ FORMATTING RULES — follow these STRICTLY:
 - For lists, use simple dash bullet points (- item). Do NOT use numbered lists.
 - NEVER use markdown headers (###, ##, #). NEVER use bold or italic markup. NEVER use emojis.
 - NEVER create titled sections like "Recommendations:", "Counterarguments:" etc. Weave analysis into natural paragraphs.
-- Keep responses concise — 2-4 short paragraphs maximum.
-- NEVER start with disclaimers about search results, missing data, or what you couldn't find. Just answer the question.`;
+- Keep responses SHORT. Maximum 2-3 paragraphs, each 2-3 sentences. Total response must be under 150 words.
+- NEVER start with disclaimers about search results, missing data, or what you couldn't find. Just answer the question.
+- If the lawyer needs more detail, they will ask follow-up questions. Do not front-load everything into one response.`;
 
 export async function POST(req: NextRequest) {
   try {
