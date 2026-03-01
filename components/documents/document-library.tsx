@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, Filter, Loader2 } from "lucide-react";
+import { Search, Filter, Loader2, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +15,7 @@ import { DocumentRow } from "./document-row";
 import { DocumentDetailModal } from "./document-detail-modal";
 import { useDocuments } from "@/hooks/use-documents";
 import { useClients } from "@/hooks/use-clients-matters";
+import { LibraryChatPanel } from "./library-chat-panel";
 import type { Document, DocType } from "@/lib/types/database";
 
 const DOC_TYPES: { value: DocType; label: string }[] = [
@@ -31,6 +32,7 @@ export function DocumentLibrary() {
   const [clientFilter, setClientFilter] = React.useState<string>("");
   const [docTypeFilter, setDocTypeFilter] = React.useState<string>("");
   const [selectedDocId, setSelectedDocId] = React.useState<string | null>(null);
+  const [chatOpen, setChatOpen] = React.useState(false);
 
   const { clients } = useClients();
   const { documents, loading, refetch, togglePin } = useDocuments({
@@ -40,15 +42,27 @@ export function DocumentLibrary() {
   });
 
   return (
-    <div className="flex flex-col gap-6 h-full">
+    <div className="flex h-full">
+      <div className="flex flex-col gap-6 flex-1 min-w-0">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground/90">
-          Document Library
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Browse and manage uploaded documents.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground/90">
+            Document Library
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Browse and manage uploaded documents.
+          </p>
+        </div>
+        <Button
+          variant={chatOpen ? "default" : "outline"}
+          size="sm"
+          className="rounded-xl gap-2 shrink-0"
+          onClick={() => setChatOpen((v) => !v)}
+        >
+          <MessageSquare className="w-4 h-4" />
+          {chatOpen ? "Close Chat" : "Chat"}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -145,6 +159,14 @@ export function DocumentLibrary() {
           setSelectedDocId(null);
           refetch();
         }}
+      />
+      </div>
+
+      {/* Library Chat Panel */}
+      <LibraryChatPanel
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        onDocumentSelect={(docId) => setSelectedDocId(docId)}
       />
     </div>
   );
