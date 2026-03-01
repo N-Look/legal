@@ -80,14 +80,13 @@ export async function POST(req: NextRequest) {
     // Build contextual message
     const contextPrefix = existingThreadId
       ? '' // Follow-up messages don't need context re-injection
-      : `CASE CONTEXT:
-Claim: "${claim ?? 'Not specified'}"
+      : `Here is the argument point the lawyer is asking about:
 
-SELECTED ARGUMENT POINT:
-Title: ${nodeLabel ?? 'Unknown'}
-Description: ${nodeDescription ?? 'No description'}
+Case claim: "${claim ?? 'Not specified'}"
+Argument title: ${nodeLabel ?? 'Unknown'}
+Argument description: ${nodeDescription ?? 'No description'}
 
-The lawyer is asking about this specific point in their argument map. Use the search_documents tool to find relevant evidence from uploaded case files, then answer their question.
+Answer the lawyer's question using the argument details above. You have all the context you need.
 
 ---
 
