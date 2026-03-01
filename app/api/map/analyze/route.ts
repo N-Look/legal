@@ -17,17 +17,26 @@ IMPORTANT — always structure your response in this EXACT order:
 \`\`\`
 containing an array of 8-14 evidence/argument objects. Each object must have:
 - label (string, 5-10 words): short title for this piece of evidence or argument
-- description (string, 2-4 sentences): detailed analysis — include specific document quotes when available, or thorough legal reasoning when applying general principles
+- description (string, 5-10 sentences MINIMUM): a thorough legal analysis written as if briefing a senior partner. NEVER write generic descriptions like "Evaluate whether..." or "Assess the extent to which..." — those are instructions, not analysis. Instead, write SUBSTANTIVE content: cite specific exhibit numbers and document names, quote key passages from witness statements or depositions, reference exact dates and names of people involved, explain the legal significance, identify how opposing counsel might attack or leverage this point, and connect it to the elements of the cause of action. Every description should read like a paragraph from a legal memorandum, not a task description.
 - nodeType (string): one of "supporting" (helps the claim), "opposing" (hurts the claim), "context" (neutral background), or "sub-argument" (derivative argument)
 - relationship (string): one of "supports", "contradicts", "provides-context", or "sub-argument"
 - reasoning (string, 1 sentence): why this node matters to the overall argument
-- documentName (string): source document filename if from uploaded docs, or "Legal Analysis" if from general reasoning
+- documentName (string): the SPECIFIC source document filename from the uploaded files. Use the actual filename — never use generic labels like "Legal Analysis" or "Case Documents."
 - confidence (number 0-1): 0.8+ for document-backed evidence, 0.5-0.8 for legal reasoning, 0.3-0.5 for speculative arguments
+- connectsTo (optional array of strings): labels of OTHER nodes in your response that this node also logically connects to. Use this when a conclusion draws from multiple pieces of evidence, or when two exhibits support the same reasoning node. This creates a reasoning NETWORK, not just a tree.
+
+CRITICAL RULES FOR DESCRIPTIONS:
+- NEVER write descriptions that start with verbs like "Evaluate", "Assess", "Determine", "Analyze", "Consider", or "Examine" — those are instructions, not analysis.
+- ALWAYS write descriptions that STATE FACTS and MAKE ARGUMENTS: "On October 12, Counselor Sanchez emailed..." not "Evaluate the counselor's communication..."
+- ALWAYS reference specific people by name, specific dates, specific exhibit numbers, and specific document titles.
+- If documents contain relevant quotes, include them directly in the description.
+- Each description should be substantial enough to fill a full paragraph in a legal brief.
 
 ALWAYS include a mix of:
 - At least 3 nodes supporting the claim
 - At least 3 nodes opposing/challenging the claim
 - At least 2 context or sub-argument nodes
+- At least 2-3 nodes should have connectsTo links to show multi-source reasoning
 
 2. THEN, after the JSON block, write a 2-3 sentence summary of the argument landscape and key battlegrounds.
 
@@ -108,6 +117,7 @@ const MOCK_NODES: AnalysisNode[] = [
     reasoning: 'Expert testimony on causation and damages directly undermines the "reasonable care" defense.',
     documentName: 'n.pdf — Dr. Carter Witness Statement',
     confidence: 0.89,
+    connectsTo: ['IIED Claim — Extreme and Outrageous Conduct', 'Social Media Bullying Was Pervasive and Visible'],
   },
   {
     label: 'Multiple Staff Knew But System Failed',
@@ -117,6 +127,7 @@ const MOCK_NODES: AnalysisNode[] = [
     reasoning: 'Fragmented awareness across multiple staff proves the system failed to connect the dots.',
     documentName: 'n.pdf — Multiple Witness Statements',
     confidence: 0.87,
+    connectsTo: ['Sanchez Email to Green Went Unaddressed', 'Fisher Memo — Prompt Documented Response'],
   },
 
   // === CONTEXT / SUB-ARGUMENTS ===
@@ -343,6 +354,7 @@ function mapNode(n: Record<string, unknown>): AnalysisNode {
     reasoning: (n.reasoning as string) ?? '',
     documentName: (n.documentName as string) ?? undefined,
     confidence: typeof n.confidence === 'number' ? n.confidence : 0.5,
+    connectsTo: Array.isArray(n.connectsTo) ? (n.connectsTo as string[]).filter((s) => typeof s === 'string') : undefined,
   };
 }
 
@@ -364,6 +376,17 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
+  // Set the structured argument map system prompt on the assistant
+  try {
+    await fetch(`${baseUrl}/assistants/${assistantId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      body: JSON.stringify({ system_prompt: SYSTEM_PROMPT }),
+    });
+  } catch (e) {
+    console.error('[map/analyze] Failed to update assistant prompt:', e);
+  }
+
   const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -375,7 +398,14 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify({
-      content: `Build a comprehensive argument map for the following legal claim. Use uploaded documents where relevant, AND apply general legal reasoning (duty of care, breach, causation, damages, procedural defenses, etc.) to create a full map with 8-14 nodes covering both sides of the argument.\n\nCLAIM: "${claim}"\n\nIMPORTANT: You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes. Do NOT say "no relevant information found." Even if documents don't directly match, use legal analysis to build the map.`,
+      content: `Build a comprehensive argument map for the following legal claim. Use uploaded documents where relevant, AND apply general legal reasoning (duty of care, breach, causation, damages, procedural defenses, etc.) to create a full map with 8-14 nodes covering both sides of the argument.
+
+CLAIM: "${claim}"
+
+IMPORTANT REQUIREMENTS:
+1. You MUST return the \`\`\`map-nodes JSON block with at least 8 nodes covering BOTH sides — at least 3 "supporting" (nodeType: "supporting", relationship: "supports") and at least 3 "opposing" (nodeType: "opposing", relationship: "contradicts"). Do NOT make everything "context". Do NOT say "no relevant information found."
+2. DESCRIPTIONS MUST BE SUBSTANTIVE — write 5-10 sentences per node as if you are drafting a legal memorandum. Reference specific people by name, specific dates, specific exhibit numbers, and quote directly from documents when available. NEVER write generic descriptions like "Evaluate whether the school met the standard of care" — instead write "On September 28, 2023, Teacher Fisher submitted a formal memo (Exhibit 4) stating..." Descriptions that begin with instructional verbs (Evaluate, Assess, Determine, Consider, Examine) are WRONG — rewrite them as factual analysis.
+3. For documentName, use the ACTUAL filename from the uploaded documents — never use generic labels like "Legal Analysis" or "Case Documents."`,
       memory: 'auto',
       send_to_llm: true,
     }),
@@ -389,8 +419,18 @@ async function querySingleAssistant(claim: string, assistantId: string): Promise
 
   const msg = await msgRes.json();
   const raw: string = msg.content ?? '';
+  console.log(`[map/analyze] Raw response length: ${raw.length}, first 200 chars:`, raw.slice(0, 200));
 
-  return parseAnalysisResponse(raw);
+  const result = parseAnalysisResponse(raw);
+  const typeCounts = result.nodes.reduce((acc, n) => {
+    acc[n.nodeType] = (acc[n.nodeType] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  console.log(`[map/analyze] Parsed ${result.nodes.length} nodes:`, typeCounts);
+  if (result.nodes.length > 0) {
+    console.log(`[map/analyze] First node:`, JSON.stringify(result.nodes[0]).slice(0, 200));
+  }
+  return result;
 }
 
 async function queryMultipleAssistants(claim: string, assistantIds: string[]): Promise<{ nodes: AnalysisNode[]; summary: string }> {

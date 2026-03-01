@@ -17,12 +17,20 @@ IMPORTANT — always structure your response in this EXACT order:
 \`\`\`
 containing an array of 2-5 evidence/argument objects. Each object must have:
 - label (string, 5-10 words): short title
-- description (string, 2-4 sentences): detailed analysis with specific quotes from documents or thorough legal reasoning
+- description (string, 5-10 sentences MINIMUM): a thorough legal analysis written as if briefing a senior partner. NEVER write generic descriptions like "Evaluate whether..." or "Assess the extent to which..." — those are instructions, not analysis. Instead, write SUBSTANTIVE content: cite specific exhibit numbers and document names, quote key passages from witness statements or depositions, reference exact dates and names of people involved, explain the legal significance, identify how opposing counsel might attack or leverage this point. Every description should read like a paragraph from a legal memorandum, not a task description.
 - nodeType (string): one of "supporting", "opposing", "context", or "sub-argument"
 - relationship (string): one of "supports", "contradicts", "provides-context", or "sub-argument"
 - reasoning (string, 1 sentence): why this connects to the point being expanded
-- documentName (string): source document filename, or "Legal Analysis" for general reasoning
+- documentName (string): the SPECIFIC source document filename from the uploaded files. Use the actual filename — never use generic labels like "Legal Analysis" or "Case Documents."
 - confidence (number 0-1): 0.8+ for document-backed, 0.5-0.8 for legal reasoning
+- connectsTo (optional array of strings): labels of OTHER nodes in your response that this sub-point also logically connects to. Use when multiple pieces of evidence support the same conclusion.
+
+CRITICAL RULES FOR DESCRIPTIONS:
+- NEVER write descriptions that start with verbs like "Evaluate", "Assess", "Determine", "Analyze", "Consider", or "Examine" — those are instructions, not analysis.
+- ALWAYS write descriptions that STATE FACTS and MAKE ARGUMENTS: "On October 12, Counselor Sanchez emailed..." not "Evaluate the counselor's communication..."
+- ALWAYS reference specific people by name, specific dates, specific exhibit numbers, and specific document titles.
+- If documents contain relevant quotes, include them directly in the description.
+- Each description should be substantial enough to fill a full paragraph in a legal brief.
 
 2. THEN, write a 1-sentence summary.
 
@@ -397,6 +405,7 @@ function mapNode(n: Record<string, unknown>): AnalysisNode {
     reasoning: (n.reasoning as string) ?? '',
     documentName: (n.documentName as string) ?? undefined,
     confidence: typeof n.confidence === 'number' ? n.confidence : 0.5,
+    connectsTo: Array.isArray(n.connectsTo) ? (n.connectsTo as string[]).filter((s) => typeof s === 'string') : undefined,
   };
 }
 
@@ -561,6 +570,17 @@ async function querySingleAssistantExpand(
   const apiKey = process.env.BACKBOARD_API_KEY!;
   const baseUrl = process.env.BACKBOARD_API_URL ?? 'https://app.backboard.io/api';
 
+  // Set the structured expand system prompt on the assistant
+  try {
+    await fetch(`${baseUrl}/assistants/${assistantId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+      body: JSON.stringify({ system_prompt: SYSTEM_PROMPT }),
+    });
+  } catch (e) {
+    console.error('[map/expand] Failed to update assistant prompt:', e);
+  }
+
   const threadRes = await fetch(`${baseUrl}/assistants/${assistantId}/threads`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
@@ -568,7 +588,16 @@ async function querySingleAssistantExpand(
   });
   const thread = await threadRes.json();
 
-  const content = `I am building an argument map for this legal claim:\n"${claim}"\n\nI need to dig deeper into this specific point:\n**${nodeLabel}**\n${nodeDescription}\n\nReturn 2-5 sub-points that expand on this specific argument. Use uploaded documents where relevant, AND apply general legal reasoning (relevant doctrines, tests, counterarguments, evidentiary considerations). You MUST return the \`\`\`map-nodes JSON block with at least 2 nodes. Do NOT say "no relevant information found."`;
+  const content = `I am building an argument map for this legal claim:
+"${claim}"
+
+I need to dig deeper into this specific point:
+**${nodeLabel}**
+${nodeDescription}
+
+Return 2-5 sub-points that expand on this specific argument. Include a MIX of nodeTypes — some "supporting" (relationship: "supports"), some "opposing" (relationship: "contradicts"), and optionally "context" or "sub-argument". Do NOT make everything the same type. Use uploaded documents where relevant, AND apply general legal reasoning. You MUST return the \`\`\`map-nodes JSON block with at least 2 nodes. Do NOT say "no relevant information found."
+
+CRITICAL: Each node's "description" field must be 5-10 sentences of SUBSTANTIVE legal analysis — cite specific exhibit numbers, quote from documents, name specific people and dates, and explain legal significance. NEVER write generic descriptions like "Evaluate whether..." or "Assess the extent to which..." — those are instructions, not analysis. Write as if drafting a legal memorandum. For "documentName", use the ACTUAL filename from the uploaded documents, not generic labels.`;
 
   const msgRes = await fetch(`${baseUrl}/threads/${thread.thread_id}/messages`, {
     method: 'POST',
@@ -583,7 +612,9 @@ async function querySingleAssistantExpand(
   }
 
   const msg = await msgRes.json();
-  return parseExpandResponse(msg.content ?? '');
+  const raw: string = msg.content ?? '';
+  console.log(`[map/expand] Raw response length: ${raw.length}, first 200 chars:`, raw.slice(0, 200));
+  return parseExpandResponse(raw);
 }
 
 async function queryMultipleAssistantsExpand(
