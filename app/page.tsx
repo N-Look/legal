@@ -61,21 +61,21 @@ export default function LandingPage() {
     };
 
     const steps = [
-        { title: "Upload Documents", desc: "Drag and drop briefs, transcripts, and exhibits. AI indexes everything automatically.", icon: Upload },
-        { title: "Ask Questions", desc: "Chat with your documents using AI. Get answers with direct PDF references.", icon: MessageSquare },
-        { title: "Map Your Case", desc: "Visualize arguments, evidence, and contradictions in an interactive graph.", icon: Map },
-        { title: "Search & Export", desc: "Find citations from CanLII, build curated authority binders, and export.", icon: Download }
+        { title: "Upload Documents", desc: "Drag and drop briefs, transcripts, and exhibits. AI indexes and processes everything automatically.", icon: Upload },
+        { title: "Analyze Your Case", desc: "Chat with your documents using AI. Every answer is grounded in the actual text with clickable PDF references.", icon: MessageSquare },
+        { title: "Build Your Strategy", desc: "Map arguments visually, search verified case law, and run AI courtroom simulations to stress-test your approach.", icon: Map },
+        { title: "Prepare & Export", desc: "Build authority binders, export court-ready packages, and walk into the courtroom fully prepared.", icon: Download }
     ];
 
     const features = [
-        { title: "AI Document Chat", desc: "Ask questions about any uploaded document and get AI answers grounded in the actual text, with clickable quote references.", icon: MessageSquare },
-        { title: "Citation Search", desc: "Search the CanLII database with natural language. AI analyzes results and extracts key passages for your case.", icon: Search },
-        { title: "Argument Mapping", desc: "Visualize your case as an interactive graph. See how claims, evidence, and counterarguments connect.", icon: Map },
-        { title: "Smart PDF Viewer", desc: "View documents with text-layer highlighting. Click a quoted passage and jump straight to it in the PDF.", icon: Eye },
-        { title: "Client/Matter Scoping", desc: "Organize documents by client and matter. Data stays strictly separated across engagements.", icon: Users },
-        { title: "AI-Powered Indexing", desc: "Every uploaded document is automatically processed and indexed, making it instantly searchable and chat-ready.", icon: Brain },
-        { title: "Authority Binder Export", desc: "Build curated binders of key authorities and export structured, court-ready authority bundles.", icon: FolderOpen },
-        { title: "Full Audit Trail", desc: "Complete provenance tracking. Know exactly when documents were uploaded, processed, and referenced.", icon: History }
+        { title: "AI Document Chat", desc: "Ask questions about any uploaded document and get AI answers grounded in the actual text, with clickable references back to the source PDF.", icon: MessageSquare },
+        { title: "Citation Search", desc: "Search the CanLII database with natural language. AI analyzes results and extracts key passages relevant to your case.", icon: Search },
+        { title: "Argument Mapping", desc: "Visualize your entire case as an interactive graph. See how claims, evidence, and counterarguments connect at a glance.", icon: Map },
+        { title: "Courtroom Simulation", desc: "Practice your case against AI opposing counsel. A judge rules on objections while a jury scores your persuasiveness in real time.", icon: Landmark },
+        { title: "Client & Matter Scoping", desc: "Organize all documents by client and matter. Data stays strictly separated across engagements with zero cross-contamination.", icon: Users },
+        { title: "AI-Powered Indexing", desc: "Every uploaded document is automatically processed and indexed, making it instantly searchable and ready for AI analysis.", icon: Brain },
+        { title: "Authority Binder Export", desc: "Build curated binders of key authorities from your citation searches and export structured, court-ready packages.", icon: FolderOpen },
+        { title: "Full Audit Trail", desc: "Complete provenance tracking. Know exactly when documents were uploaded, processed, cited, and who accessed them.", icon: History }
     ];
 
     return (
@@ -141,7 +141,7 @@ export default function LandingPage() {
                     >
                         <Badge variant="outline" className="w-fit rounded-full px-4 py-1.5 border-primary/20 bg-primary/5 text-primary">
                             <Sparkles className="w-3.5 h-3.5 mr-2 inline" />
-                            AI-Powered Legal Research
+                            AI-Powered Litigation Platform
                         </Badge>
                         <motion.h1
                             initial={{ opacity: 0, y: 20 }}
@@ -149,7 +149,7 @@ export default function LandingPage() {
                             transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
                             className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1]"
                         >
-                            Your Intelligent <br className="hidden md:block" /> Case Companion.
+                            Prepare, Analyze, <br className="hidden md:block" /> and Win.
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
@@ -157,7 +157,7 @@ export default function LandingPage() {
                             transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
                             className="text-xl text-muted-foreground max-w-lg leading-relaxed"
                         >
-                            Upload documents, chat with AI about your case, map arguments visually, and search citations — all in one platform built for legal professionals.
+                            Upload case files, chat with AI about your documents, map arguments visually, simulate courtroom proceedings, and search citations — the all-in-one litigation platform.
                         </motion.p>
                         <div className="flex flex-col sm:flex-row gap-4 mt-4">
                             <Link href="/login" className="contents">
@@ -178,7 +178,7 @@ export default function LandingPage() {
                             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary" /> AI Document Chat</span>
                             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary" /> Argument Mapping</span>
                             <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary" /> Citation Search</span>
-                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary" /> Document Intelligence</span>
+                            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-primary" /> Courtroom Simulation</span>
                         </div>
                     </motion.div>
 
@@ -239,7 +239,7 @@ export default function LandingPage() {
                                                 <Map className="w-3 h-3" /> Argument Map
                                             </div>
                                             <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-muted/50 rounded-full px-3 py-1.5">
-                                                <FolderOpen className="w-3 h-3" /> Binder Export
+                                                <Landmark className="w-3 h-3" /> Courtroom Sim
                                             </div>
                                         </div>
                                     </CardContent>
@@ -261,7 +261,7 @@ export default function LandingPage() {
                         className="grid md:grid-cols-2 gap-16"
                     >
                         <div>
-                            <h2 className="text-3xl font-bold mb-6">The old way is costly.</h2>
+                            <h2 className="text-3xl font-bold mb-6">Legal work shouldn&apos;t feel this slow.</h2>
                             <motion.ul variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-4 text-muted-foreground">
                                 <motion.li variants={itemVariant} className="flex gap-3">
                                     <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-2 shrink-0"></span>
@@ -279,10 +279,14 @@ export default function LandingPage() {
                                     <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-2 shrink-0"></span>
                                     <p>Generic AI tools hallucinate citations or provide unverified answers.</p>
                                 </motion.li>
+                                <motion.li variants={itemVariant} className="flex gap-3">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-destructive mt-2 shrink-0"></span>
+                                    <p>No way to stress-test your arguments before stepping into the courtroom.</p>
+                                </motion.li>
                             </motion.ul>
                         </div>
                         <div>
-                            <h2 className="text-3xl font-bold mb-6">Lex AI is smarter.</h2>
+                            <h2 className="text-3xl font-bold mb-6">Lex AI changes that.</h2>
                             <motion.ul variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true }} className="space-y-4 text-muted-foreground">
                                 <motion.li variants={itemVariant} className="flex gap-3">
                                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
@@ -300,6 +304,10 @@ export default function LandingPage() {
                                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                                     <p>Citation search backed by CanLII with verified results — no hallucinations, full audit trail.</p>
                                 </motion.li>
+                                <motion.li variants={itemVariant} className="flex gap-3">
+                                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                                    <p>AI courtroom simulations where you argue against opposing counsel, face judicial rulings, and track jury persuasion in real time.</p>
+                                </motion.li>
                             </motion.ul>
                         </div>
                     </motion.div>
@@ -310,8 +318,8 @@ export default function LandingPage() {
             <section id="how-it-works" className="py-32 px-6">
                 <div className="container mx-auto max-w-5xl">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold mb-4">From upload to insight in minutes.</h2>
-                        <p className="text-xl text-muted-foreground">A workflow that takes you from raw documents to complete case intelligence.</p>
+                        <h2 className="text-4xl font-bold mb-4">From raw files to courtroom-ready in minutes.</h2>
+                        <p className="text-xl text-muted-foreground">A workflow that takes you from scattered documents to a fully prepared case strategy.</p>
                     </div>
 
                     <motion.div
@@ -344,8 +352,8 @@ export default function LandingPage() {
             <section id="features" className="py-32 bg-muted/30 px-6">
                 <div className="container mx-auto">
                     <div className="text-center mb-20">
-                        <h2 className="text-4xl font-bold mb-4">Everything you need for case preparation.</h2>
-                        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">AI-powered tools for document intelligence, citation research, and case analysis — all in one place.</p>
+                        <h2 className="text-4xl font-bold mb-4">Every tool your legal team needs.</h2>
+                        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">Document intelligence, citation research, argument analysis, and courtroom simulation — unified in one platform.</p>
                     </div>
 
                     <motion.div
@@ -381,9 +389,9 @@ export default function LandingPage() {
                         viewport={{ once: true }}
                         variants={fadeUpVariant}
                     >
-                        <h2 className="text-4xl font-bold mb-6">Tangible, actionable deliverables.</h2>
+                        <h2 className="text-4xl font-bold mb-6">Real deliverables, not just answers.</h2>
                         <p className="text-lg text-muted-foreground mb-8">
-                            More than chat responses. Lex AI produces structured outputs you can use directly in case preparation, filing, and team coordination.
+                            Lex AI produces structured, exportable outputs you can bring directly into filings, team reviews, and courtroom preparation.
                         </p>
                         <div className="space-y-4">
                             <div className="flex items-start gap-4">
@@ -392,7 +400,7 @@ export default function LandingPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-semibold">Authority Binder Packs</h4>
-                                    <p className="text-muted-foreground text-sm">Curated, exportable bundles of verified citations with key passages and source details.</p>
+                                    <p className="text-muted-foreground text-sm">Curated bundles of verified citations with key passages, organized by relevance and ready for court filing.</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -401,7 +409,7 @@ export default function LandingPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-semibold">Visual Argument Maps</h4>
-                                    <p className="text-muted-foreground text-sm">Interactive graphs showing claims, supporting evidence, and contradictions across your case.</p>
+                                    <p className="text-muted-foreground text-sm">Interactive case graphs that reveal how claims, evidence, and counterarguments connect — shareable with your entire team.</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">
@@ -409,8 +417,8 @@ export default function LandingPage() {
                                     <MessageSquare className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">AI-Grounded Summaries</h4>
-                                    <p className="text-muted-foreground text-sm">Document summaries and Q&A answers with direct references back to source PDFs.</p>
+                                    <h4 className="font-semibold">Simulation Transcripts</h4>
+                                    <p className="text-muted-foreground text-sm">Full courtroom simulation transcripts with jury scoring breakdowns, so you know exactly where your arguments land.</p>
                                 </div>
                             </div>
                         </div>
@@ -453,10 +461,11 @@ export default function LandingPage() {
                                 <motion.div variants={itemVariant} className="pl-4 border-l border-zinc-800 ml-2 space-y-2">
                                     <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> authority_binder.json</motion.div>
                                     <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> argument_map.svg</motion.div>
+                                    <motion.div variants={itemVariant} className="flex items-center gap-2"><FileText className="w-4 h-4 text-zinc-500" /> simulation_transcript.pdf</motion.div>
                                 </motion.div>
                             </motion.div>
                             <motion.div variants={itemVariant} className="mt-6 text-zinc-500">
-                                5 files, 2 directories. Indexed & chat-ready.
+                                6 files, 2 directories. Indexed & courtroom-ready.
                             </motion.div>
                         </motion.div>
                     </motion.div>
@@ -468,35 +477,35 @@ export default function LandingPage() {
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
                 <div className="container mx-auto relative z-10">
                     <div className="max-w-3xl mb-16">
-                        <h2 className="text-4xl font-bold mb-6">Security & Governance by Design</h2>
-                        <p className="text-primary-foreground/80 text-xl">Built to satisfy the most stringent infosec reviews and operational guidelines.</p>
+                        <h2 className="text-4xl font-bold mb-6">Built for firms that take security seriously.</h2>
+                        <p className="text-primary-foreground/80 text-xl">Enterprise-grade security and governance baked into every layer of the platform.</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
                         <div>
                             <Shield className="w-8 h-8 mb-4 opacity-80" />
-                            <h3 className="font-semibold text-lg mb-2">Matter Scoping</h3>
-                            <p className="text-primary-foreground/80 text-sm">Data strictly partitioned by client and matter. Zero cross-contamination risks.</p>
+                            <h3 className="font-semibold text-lg mb-2">Client & Matter Isolation</h3>
+                            <p className="text-primary-foreground/80 text-sm">Every document, chat, and simulation is strictly partitioned by client and matter. Zero cross-contamination.</p>
                         </div>
                         <div>
                             <Users className="w-8 h-8 mb-4 opacity-80" />
-                            <h3 className="font-semibold text-lg mb-2">Access Control</h3>
-                            <p className="text-primary-foreground/80 text-sm">SSO integration with role-based permissions tailored for attorneys, paralegals, and admins.</p>
+                            <h3 className="font-semibold text-lg mb-2">Role-Based Access</h3>
+                            <p className="text-primary-foreground/80 text-sm">Granular permissions for partners, associates, paralegals, and support staff. Everyone sees only what they need.</p>
                         </div>
                         <div>
                             <History className="w-8 h-8 mb-4 opacity-80" />
                             <h3 className="font-semibold text-lg mb-2">Audit Logs</h3>
-                            <p className="text-primary-foreground/80 text-sm">Immutable tracking of who reviewed what, and when a source was fetched.</p>
+                            <p className="text-primary-foreground/80 text-sm">Immutable tracking of every action — who reviewed what, when citations were pulled, and which documents were accessed.</p>
                         </div>
                         <div>
                             <Download className="w-8 h-8 mb-4 opacity-80" />
-                            <h3 className="font-semibold text-lg mb-2">Export Controls</h3>
-                            <p className="text-primary-foreground/80 text-sm">Data never lingers. Automated retention policies and secure deletion workflows.</p>
+                            <h3 className="font-semibold text-lg mb-2">Data Retention Controls</h3>
+                            <p className="text-primary-foreground/80 text-sm">Automated retention policies, secure deletion workflows, and full control over what stays and what goes.</p>
                         </div>
                         <div className="lg:col-span-2">
                             <LinkIcon className="w-8 h-8 mb-4 opacity-80" />
-                            <h3 className="font-semibold text-lg mb-2">Optional Paid Integrations</h3>
-                            <p className="text-primary-foreground/80 text-sm">Bring your own credentials for LexisNexis, Westlaw, or PACER. Lex AI acts as a broker and never stores your raw authentication tokens.</p>
+                            <h3 className="font-semibold text-lg mb-2">Third-Party Integrations</h3>
+                            <p className="text-primary-foreground/80 text-sm">Connect LexisNexis, Westlaw, or CanLII with your own credentials. Lex AI brokers the connection and never stores your authentication tokens.</p>
                         </div>
                     </div>
                 </div>
@@ -505,9 +514,9 @@ export default function LandingPage() {
             {/* Footer / Final CTA */}
             <footer className="bg-background pt-32 pb-12 px-6 border-t">
                 <div className="container mx-auto text-center mb-24">
-                    <h2 className="text-4xl font-bold mb-6">Ready to work smarter on your cases?</h2>
+                    <h2 className="text-4xl font-bold mb-6">Ready to transform how you prepare for court?</h2>
                     <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                        Upload your first document, let AI index it, and start asking questions in minutes.
+                        Upload your first case file, run a courtroom simulation, and start building your strategy in minutes.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link href="/login" className="contents">
