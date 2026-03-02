@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Scale, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -39,6 +39,7 @@ export default function LoginPage() {
                 return;
             }
 
+            const supabase = createClient();
             const { error: signInError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
