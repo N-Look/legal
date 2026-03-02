@@ -21,12 +21,48 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Citation, AuthorityPack } from "@/types/citation";
 
-// Default binder authorities (matching original screenshot)
-const DEFAULT_BINDER: Citation[] = [
-    { id: "default-1", raw: "Davis v. Monroe County Bd. of Educ., 526 U.S. 629 (1999)", caseName: "Davis v. Monroe County Bd. of Educ.", reporter: "526 U.S. 629", year: "1999", type: "case", status: "resolved" },
-    { id: "default-2", raw: "Tinker v. Des Moines Indep. Cmty. Sch. Dist., 393 U.S. 503 (1969)", caseName: "Tinker v. Des Moines Indep. Cmty. Sch. Dist.", reporter: "393 U.S. 503", year: "1969", type: "case", status: "resolved" },
-    { id: "default-3", raw: "Nabozny v. Podlesny, 92 F.3d 446 (1996)", caseName: "Nabozny v. Podlesny", reporter: "92 F.3d 446", year: "1996", type: "case", status: "ambiguous", passage: "FAILURE TO PROTECT" },
-    { id: "default-4", raw: "Mahanoy Area Sch. Dist. v. B.L., 141 S. Ct. 2038 (2021)", caseName: "Mahanoy Area Sch. Dist. v. B.L.", reporter: "141 S. Ct. 2038", year: "2021", type: "case", status: "resolved" },
+// Mock cases for binder switching
+const MOCK_CASES = [
+    {
+        id: "case-1",
+        name: "Smith v. Midville",
+        client: "J. Smith",
+        docCount: 14,
+        binder: [
+            { id: "default-1", raw: "Davis v. Monroe County Bd. of Educ., 526 U.S. 629 (1999)", caseName: "Davis v. Monroe County Bd. of Educ.", reporter: "526 U.S. 629", year: "1999", type: "case" as const, status: "resolved" as const },
+            { id: "default-2", raw: "Tinker v. Des Moines Indep. Cmty. Sch. Dist., 393 U.S. 503 (1969)", caseName: "Tinker v. Des Moines Indep. Cmty. Sch. Dist.", reporter: "393 U.S. 503", year: "1969", type: "case" as const, status: "resolved" as const },
+            { id: "default-3", raw: "Nabozny v. Podlesny, 92 F.3d 446 (1996)", caseName: "Nabozny v. Podlesny", reporter: "92 F.3d 446", year: "1996", type: "case" as const, status: "ambiguous" as const, passage: "FAILURE TO PROTECT" },
+            { id: "default-4", raw: "Mahanoy Area Sch. Dist. v. B.L., 141 S. Ct. 2038 (2021)", caseName: "Mahanoy Area Sch. Dist. v. B.L.", reporter: "141 S. Ct. 2038", year: "2021", type: "case" as const, status: "resolved" as const },
+        ],
+    },
+    {
+        id: "case-2",
+        name: "Torres v. Blackwood Inc.",
+        client: "M. Torres",
+        docCount: 8,
+        binder: [
+            { id: "torres-1", raw: "Burlington Indus., Inc. v. Ellerth, 524 U.S. 742 (1998)", caseName: "Burlington Indus., Inc. v. Ellerth", reporter: "524 U.S. 742", year: "1998", type: "case" as const, status: "resolved" as const },
+            { id: "torres-2", raw: "Faragher v. City of Boca Raton, 524 U.S. 775 (1998)", caseName: "Faragher v. City of Boca Raton", reporter: "524 U.S. 775", year: "1998", type: "case" as const, status: "resolved" as const },
+            { id: "torres-3", raw: "Meritor Savings Bank v. Vinson, 477 U.S. 57 (1986)", caseName: "Meritor Savings Bank v. Vinson", reporter: "477 U.S. 57", year: "1986", type: "case" as const, status: "ambiguous" as const, passage: "HOSTILE ENVIRONMENT" },
+        ],
+    },
+    {
+        id: "case-3",
+        name: "Chen v. Apex Health",
+        client: "L. Chen",
+        docCount: 22,
+        binder: [
+            { id: "chen-1", raw: "Daubert v. Merrell Dow Pharmaceuticals, 509 U.S. 579 (1993)", caseName: "Daubert v. Merrell Dow Pharmaceuticals", reporter: "509 U.S. 579", year: "1993", type: "case" as const, status: "resolved" as const },
+            { id: "chen-2", raw: "Kumho Tire Co. v. Carmichael, 526 U.S. 137 (1999)", caseName: "Kumho Tire Co. v. Carmichael", reporter: "526 U.S. 137", year: "1999", type: "case" as const, status: "resolved" as const },
+        ],
+    },
+    {
+        id: "case-4",
+        name: "Patel Estate Trust",
+        client: "R. Patel",
+        docCount: 6,
+        binder: [],
+    },
 ];
 
 type Step = "idle" | "searching" | "results";
@@ -37,10 +73,37 @@ export default function DashboardPage() {
     const [answer, setAnswer] = React.useState("");
     const [citations, setCitations] = React.useState<Citation[]>([]);
     const [error, setError] = React.useState("");
-    const [binder, setBinder] = React.useState<Citation[]>(DEFAULT_BINDER);
-    const [matterName] = React.useState("Smith v. Midville");
+    const [activeCaseId, setActiveCaseId] = React.useState(MOCK_CASES[0].id);
+    const [binderOpen, setBinderOpen] = React.useState(false);
+    const activeCase = MOCK_CASES.find((c) => c.id === activeCaseId) ?? MOCK_CASES[0];
+    const [binder, setBinder] = React.useState<Citation[]>(activeCase.binder);
+    const matterName = activeCase.name;
     const [showSummary, setShowSummary] = React.useState(false);
     const [expandedId, setExpandedId] = React.useState<string | null>(null);
+    const binderRef = React.useRef<HTMLDivElement>(null);
+
+    function switchCase(caseId: string) {
+        const c = MOCK_CASES.find((mc) => mc.id === caseId);
+        if (c) {
+            setActiveCaseId(caseId);
+            setBinder(c.binder);
+            setBinderOpen(false);
+            setExpandedId(null);
+        }
+    }
+
+    // Close dropdown on outside click
+    React.useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (binderRef.current && !binderRef.current.contains(e.target as Node)) {
+                setBinderOpen(false);
+            }
+        }
+        if (binderOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => document.removeEventListener("mousedown", handleClickOutside);
+        }
+    }, [binderOpen]);
 
     async function handleSearch(e?: React.FormEvent<HTMLFormElement>) {
         e?.preventDefault();
@@ -282,15 +345,49 @@ export default function DashboardPage() {
             {/* Right Column (Binder) */}
             <aside className="xl:col-span-4 flex flex-col gap-6 sticky top-6">
                 <Card className="shadow-sm border-border/50 rounded-2xl overflow-hidden bg-background flex flex-col">
-                    {/* Header */}
-                    <div className="p-5 border-b border-border/40 bg-muted/10 flex items-center justify-between group cursor-pointer hover:bg-muted/20 transition-colors">
-                        <div className="flex flex-col gap-0.5">
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Binder</span>
-                            <span className="font-medium text-foreground text-[15px]">{matterName}</span>
+                    {/* Header — clickable case switcher */}
+                    <div className="relative" ref={binderRef}>
+                        <div
+                            className="p-5 border-b border-border/40 bg-muted/10 flex items-center justify-between group cursor-pointer hover:bg-muted/20 transition-colors"
+                            onClick={() => setBinderOpen((o) => !o)}
+                        >
+                            <div className="flex flex-col gap-0.5">
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Binder</span>
+                                <span className="font-medium text-foreground text-[15px]">{matterName}</span>
+                            </div>
+                            <div className={`w-8 h-8 rounded-full bg-background border border-border/50 shadow-sm flex items-center justify-center group-hover:border-primary/30 transition-all ${binderOpen ? "rotate-180" : ""}`}>
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            </div>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-background border border-border/50 shadow-sm flex items-center justify-center group-hover:border-primary/30 transition-colors">
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                        </div>
+
+                        {/* Case dropdown */}
+                        {binderOpen && (
+                            <div className="absolute top-full left-0 right-0 z-50 bg-background border border-border/50 rounded-b-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                                <div className="px-4 py-2.5 border-b border-border/30">
+                                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Switch Case</span>
+                                </div>
+                                {MOCK_CASES.map((c) => (
+                                    <div
+                                        key={c.id}
+                                        onClick={() => switchCase(c.id)}
+                                        className={`px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
+                                            c.id === activeCaseId
+                                                ? "bg-primary/5 border-l-[3px] border-primary"
+                                                : "hover:bg-muted/40 border-l-[3px] border-transparent"
+                                        }`}
+                                    >
+                                        <Folder className={`w-4 h-4 shrink-0 ${c.id === activeCaseId ? "text-primary" : "text-muted-foreground"}`} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-medium truncate ${c.id === activeCaseId ? "text-primary" : "text-foreground"}`}>{c.name}</p>
+                                            <p className="text-[11px] text-muted-foreground">{c.client} &middot; {c.docCount} docs &middot; {c.binder.length} authorities</p>
+                                        </div>
+                                        {c.id === activeCaseId && (
+                                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Summary (toggleable) */}
