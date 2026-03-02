@@ -315,11 +315,62 @@ function getMockResponse(
   phase: SimulationPhase,
   messageCount: number,
   currentJuryScore: JuryScore,
+  userMessage?: string,
+  messageHistory?: CourtroomMessage[],
 ): { messages: CourtroomMessage[]; juryScore: JuryScore; nextPhase: SimulationPhase } {
   const idx = mockIndex++ % 5;
   const messages: CourtroomMessage[] = [];
 
   if (phase === 'examination') {
+    // --- Pre-check: first examination question must introduce the witness ---
+    // If this is the very first message in examination and the user doesn't
+    // ask the witness to state their name, opposing counsel objects.
+    const witnessMessages = (messageHistory ?? []).filter(
+      (m) => m.role === 'witness',
+    );
+    const isFirstExamQuestion = witnessMessages.length === 0;
+    const lowerMessage = (userMessage ?? '').toLowerCase();
+
+    const asksForName =
+      lowerMessage.includes('state your name') ||
+      lowerMessage.includes('your name') ||
+      lowerMessage.includes('introduce yourself') ||
+      lowerMessage.includes('who are you') ||
+      lowerMessage.includes('identify yourself') ||
+      lowerMessage.includes('tell the court your name') ||
+      lowerMessage.includes('tell us your name') ||
+      lowerMessage.includes('please identify');
+
+    if (isFirstExamQuestion && !asksForName) {
+      messages.push(
+        makeMessage(
+          'opposing-counsel',
+          'OBJECTION: Improper procedure — counsel must first ask the witness to state their name for the record before proceeding with examination.',
+          phase,
+          { isObjection: true },
+        ),
+      );
+      messages.push(
+        makeMessage(
+          'judge',
+          'SUSTAINED. Counsel, proper procedure requires that you first ask the witness to state their name for the record before beginning your examination. Please start again.',
+          phase,
+          { ruling: 'sustained' },
+        ),
+      );
+
+      const newScore = Math.max(0, currentJuryScore.userScore - 4);
+      const juryScore: JuryScore = {
+        userScore: newScore,
+        reasoning: 'Procedural error — counsel skipped witness identification.',
+        history: [
+          ...currentJuryScore.history,
+          { score: newScore, reason: 'Procedural violation' },
+        ],
+      };
+      return { messages, juryScore, nextPhase: phase };
+    }
+
     // Witness answers first
     const witnessText = MOCK_WITNESS_RESPONSES[idx % MOCK_WITNESS_RESPONSES.length];
     messages.push(makeMessage('witness', witnessText, phase));
@@ -397,7 +448,7 @@ export async function POST(req: NextRequest) {
     if (!process.env.BACKBOARD_API_KEY) {
       await new Promise((r) => setTimeout(r, 1500));
       const phaseMessages = messageHistory.filter((m) => m.phase === phase);
-      const mock = getMockResponse(phase, phaseMessages.length, juryScore);
+      const mock = getMockResponse(phase, phaseMessages.length, juryScore, message, messageHistory);
       const response: SimulationResponse = {
         messages: mock.messages,
         threads,
@@ -460,77 +511,112 @@ export async function POST(req: NextRequest) {
     // EXAMINATION PHASE: Witness → Opposing Counsel → Judge
     // ===================================================================
     if (phase === 'examination') {
-      // Step 1: Witness answers the question
-      const wPrompt = witnessPrompt(
-        config.caseName,
-        config.caseDescription,
-        currentPhase,
-        transcript,
+      // --- Pre-check: first examination question must introduce the witness ---
+      // If this is the very first message in examination and the user doesn't
+      // ask the witness to state their name, opposing counsel objects.
+      const witnessMessages = messageHistory.filter(
+        (m) => m.role === 'witness',
       );
-      const witnessResult = await sendMessage(updatedThreads.witness!, wPrompt);
-      const witnessContent = witnessResult.content.trim();
+      const isFirstExamQuestion = witnessMessages.length === 0;
+      const lowerMessage = message.toLowerCase();
 
-      if (!detectWait(witnessContent)) {
+      const asksForName =
+        lowerMessage.includes('state your name') ||
+        lowerMessage.includes('your name') ||
+        lowerMessage.includes('introduce yourself') ||
+        lowerMessage.includes('who are you') ||
+        lowerMessage.includes('identify yourself') ||
+        lowerMessage.includes('tell the court your name') ||
+        lowerMessage.includes('tell us your name') ||
+        lowerMessage.includes('please identify');
+
+      if (isFirstExamQuestion && !asksForName) {
+        // Automatic procedural objection — no AI call needed
         responseMessages.push(
-          makeMessage('witness', witnessContent, currentPhase),
+          makeMessage('opposing-counsel',
+            'OBJECTION: Improper procedure — counsel must first ask the witness to state their name for the record before proceeding with examination.',
+            currentPhase, { isObjection: true }),
         );
-      }
-
-      // Step 2: Opposing Counsel reacts (may object or "NO COMMENT")
-      const examTranscript = buildTranscript(
-        [...fullHistory, ...responseMessages],
-        8,
-      );
-      const ocPrompt = opposingCounselPrompt(
-        config.caseName,
-        config.caseDescription,
-        opposingSide,
-        currentPhase,
-        config.difficulty,
-        examTranscript,
-      );
-      const ocResult = await sendMessage(updatedThreads.opposingCounsel!, ocPrompt);
-      const ocContent = ocResult.content.trim();
-      const isObjection = detectObjection(ocContent);
-      const isNoComment = detectNoComment(ocContent);
-
-      if (!isNoComment) {
         responseMessages.push(
-          makeMessage('opposing-counsel', ocContent, currentPhase, {
-            isObjection,
-          }),
+          makeMessage('judge',
+            'SUSTAINED. Counsel, proper procedure requires that you first ask the witness to state their name for the record before beginning your examination. Please start again.',
+            currentPhase, { ruling: 'sustained' }),
         );
-      }
+      } else {
+        // --- Normal examination flow ---
 
-      // Step 3: Judge rules if objection, otherwise may stay silent
-      if (isObjection) {
-        const judgeTranscript = buildTranscript(
+        // Step 1: Witness answers the question
+        const wPrompt = witnessPrompt(
+          config.caseName,
+          config.caseDescription,
+          currentPhase,
+          transcript,
+        );
+        const witnessResult = await sendMessage(updatedThreads.witness!, wPrompt);
+        const witnessContent = witnessResult.content.trim();
+
+        if (!detectWait(witnessContent)) {
+          responseMessages.push(
+            makeMessage('witness', witnessContent, currentPhase),
+          );
+        }
+
+        // Step 2: Opposing Counsel reacts (may object or "NO COMMENT")
+        const examTranscript = buildTranscript(
           [...fullHistory, ...responseMessages],
           8,
         );
-        const jPrompt = judgePrompt(
+        const ocPrompt = opposingCounselPrompt(
           config.caseName,
+          config.caseDescription,
+          opposingSide,
           currentPhase,
-          ocContent,
-          isObjection,
-          judgeTranscript,
+          config.difficulty,
+          examTranscript,
         );
-        const judgeResult = await sendMessage(updatedThreads.judge!, jPrompt);
-        const judgeContent = judgeResult.content.trim();
+        const ocResult = await sendMessage(updatedThreads.opposingCounsel!, ocPrompt);
+        const ocContent = ocResult.content.trim();
+        const isObjection = detectObjection(ocContent);
+        const isNoComment = detectNoComment(ocContent);
 
-        const phaseTransition = detectPhaseTransition(judgeContent);
-        if (phaseTransition) {
-          currentPhase = phaseTransition;
-        }
-
-        if (judgeContent !== 'SILENCE') {
-          const ruling = detectRuling(judgeContent);
-          const cleanContent = judgeContent.replace(/PHASE:\w+/i, '').trim();
+        if (!isNoComment) {
           responseMessages.push(
-            makeMessage('judge', cleanContent, currentPhase, {
-              ruling: ruling ?? undefined,
+            makeMessage('opposing-counsel', ocContent, currentPhase, {
+              isObjection,
             }),
           );
+        }
+
+        // Step 3: Judge rules if objection, otherwise may stay silent
+        if (isObjection) {
+          const judgeTranscript = buildTranscript(
+            [...fullHistory, ...responseMessages],
+            8,
+          );
+          const jPrompt = judgePrompt(
+            config.caseName,
+            currentPhase,
+            ocContent,
+            isObjection,
+            judgeTranscript,
+          );
+          const judgeResult = await sendMessage(updatedThreads.judge!, jPrompt);
+          const judgeContent = judgeResult.content.trim();
+
+          const phaseTransition = detectPhaseTransition(judgeContent);
+          if (phaseTransition) {
+            currentPhase = phaseTransition;
+          }
+
+          if (judgeContent !== 'SILENCE') {
+            const ruling = detectRuling(judgeContent);
+            const cleanContent = judgeContent.replace(/PHASE:\w+/i, '').trim();
+            responseMessages.push(
+              makeMessage('judge', cleanContent, currentPhase, {
+                ruling: ruling ?? undefined,
+              }),
+            );
+          }
         }
       }
 
