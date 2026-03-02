@@ -17,10 +17,12 @@ import {
     CheckCircle2,
     AlertCircle,
     X,
+    LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 import { UploadProvider, useUploadContext } from "@/contexts/upload-context";
 import { DocumentChatProvider } from "@/contexts/document-chat-context";
 import { LibraryChatProvider } from "@/contexts/library-chat-context";
@@ -92,6 +94,7 @@ function UploadStatusPill() {
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const router = useRouter();
 
     const isHome = pathname === "/dashboard";
     const isUpload = pathname === "/dashboard/upload";
@@ -105,12 +108,12 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             <aside className="w-72 bg-muted/30 border-r border-border/50 flex flex-col shrink-0 overflow-y-auto">
                 {/* Logo Area */}
                 <div className="h-16 flex items-center px-8 border-b border-border/50 shrink-0 bg-background/50">
-                    <div className="flex items-center gap-3">
+                    <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
                             <Scale className="w-4.5 h-4.5" />
                         </div>
                         <span className="font-bold text-lg tracking-tight">Lex AI</span>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Sidebar Content */}
@@ -236,8 +239,17 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                                 <Bell className="w-5 h-5" />
                                 <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary border-2 border-background"></span>
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-muted/50 rounded-full ml-1">
-                                <UserCircle className="w-6 h-6" />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:bg-muted/50 rounded-full ml-1"
+                                onClick={async () => {
+                                    await fetch("/api/auth/logout", { method: "POST" });
+                                    router.push("/login");
+                                }}
+                                title="Sign out"
+                            >
+                                <LogOut className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>

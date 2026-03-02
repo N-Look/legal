@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import Link from 'next/link';
 import { Scale, Loader2, Sparkles, ChevronDown, ChevronRight, FileText, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Node } from '@xyflow/react';
@@ -32,7 +33,7 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   other: 'text-gray-600 bg-gray-50',
 };
 
-const EXAMPLE_CLAIM = 'The defense was not legally responsible for Terry\'s damages, even if bullying occurred.';
+const EXAMPLE_CLAIM = '';
 
 type DocumentWithClient = Document & { clients?: { name: string }; matters?: { name: string } | null };
 
@@ -120,15 +121,15 @@ export function ClaimInput({ onAnalyze, loading, nodes, onNodeClick, selectedNod
     <div className="w-[300px] border-r border-border/50 bg-background flex flex-col shrink-0 overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border/50">
-        <div className="flex items-center gap-2.5">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Scale className="w-4.5 h-4.5 text-primary" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Argument Map</h2>
+            <h2 className="text-sm font-semibold text-foreground">Lex AI</h2>
             <p className="text-[11px] text-muted-foreground">Build your case visually</p>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Scrollable content area */}

@@ -69,6 +69,7 @@ const SYSTEM_PROMPT = `You answer questions about a legal document. Follow these
 - Use only content from the document. Never use general knowledge or fabricate information.
 - Include exact quotes wrapped in «quote»...«/quote» markers to support factual claims.
 - No markdown bold (**), no headers (#), no emojis.
+- NEVER respond in JSON format. Always respond in plain text.
 - Use bullet points only when listing multiple items.
 - If the information is not in the document, say only: "I could not find this information in the document."`;
 
@@ -104,6 +105,28 @@ After searching, respond following these rules:
 - NEVER say things like "my search tool did not return...", "I was unable to retrieve...", or similar meta-commentary.
 - If the information truly is not in the document, say only: "I could not find this information in the document."
 - Never fabricate or guess information not found in the search results.`;
+}
+
+/**
+ * If the model returns a JSON object with "answer" and/or "source" fields,
+ * extract them into plain text so the UI doesn't show raw JSON.
+ */
+function unwrapJsonResponse(raw: string): string {
+  const trimmed = raw.trim();
+  if (!(trimmed.startsWith('{') && trimmed.endsWith('}'))) return raw;
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed.answer === 'string') {
+      let result = parsed.answer;
+      if (typeof parsed.source === 'string' && parsed.source.trim()) {
+        result += `\n\n«quote»${parsed.source}«/quote»`;
+      }
+      return result;
+    }
+  } catch {
+    // Not valid JSON — return as-is
+  }
+  return raw;
 }
 
 function parseQuotes(content: string): string[] {
@@ -166,11 +189,12 @@ export async function POST(
 
       const directMessage = buildDirectMessage(documentText, message);
       const result = await sendMessage(thread.thread_id, directMessage);
-      const quotes = parseQuotes(result.content);
+      const content = unwrapJsonResponse(result.content);
+      const quotes = parseQuotes(content);
 
       return NextResponse.json({
         threadId: thread.thread_id,
-        content: result.content,
+        content,
         messageId: result.messageId,
         quotes,
       });
@@ -191,11 +215,12 @@ export async function POST(
 
     const scopedMessage = buildBackboardFallbackMessage(doc.original_filename, message);
     const result = await sendMessage(threadId, scopedMessage);
-    const quotes = parseQuotes(result.content);
+    const content = unwrapJsonResponse(result.content);
+    const quotes = parseQuotes(content);
 
     return NextResponse.json({
       threadId,
-      content: result.content,
+      content,
       messageId: result.messageId,
       quotes,
     });
