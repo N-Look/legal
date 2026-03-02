@@ -114,9 +114,9 @@ export default function DashboardPage() {
             <section className="xl:col-span-6 flex flex-col gap-6">
                 <Card className="shadow-sm border-border/50 rounded-2xl overflow-hidden bg-background">
                     <CardHeader className="pb-5 pt-6 px-6">
-                        <CardTitle className="text-xl font-semibold">Extract Citations</CardTitle>
+                        <CardTitle className="text-xl font-semibold">Citation Search</CardTitle>
                         <CardDescription className="pt-1.5 text-sm">
-                            Upload a draft to extract, resolve, and verify cited authorities.
+                            Search case law to find, verify, and collect relevant authorities for your case.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5 px-6 pb-6 pt-2">
@@ -126,7 +126,7 @@ export default function DashboardPage() {
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search database for citations matching current case..."
+                                placeholder="Search for case law, statutes, or legal authorities..."
                                 className="pl-12 bg-background shadow-sm border-border/50 h-12 text-base rounded-xl relative z-10"
                             />
                         </form>
@@ -140,7 +140,7 @@ export default function DashboardPage() {
                             {step === "searching" ? (
                                 <>
                                     <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin text-primary" />
-                                    Searching knowledge base
+                                    Searching case law
                                     <span className="ml-1 tracking-widest animate-pulse">...</span>
                                 </>
                             ) : (
@@ -335,7 +335,7 @@ export default function DashboardPage() {
                                                     <Badge variant="outline" className="h-5 text-[10px] font-semibold border-yellow-500/30 text-yellow-700 dark:text-yellow-400 bg-yellow-500/10 rounded-sm">
                                                         {c.passage}
                                                     </Badge>
-                                                    <p className="text-[11px] text-foreground font-medium">Standard highlighted</p>
+                                                    <p className="text-[11px] text-foreground font-medium">Flagged for review</p>
                                                 </div>
                                             )}
                                         </div>

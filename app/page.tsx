@@ -74,7 +74,7 @@ export default function LandingPage() {
         { title: "Smart PDF Viewer", desc: "View documents with text-layer highlighting. Click a quoted passage and jump straight to it in the PDF.", icon: Eye },
         { title: "Client/Matter Scoping", desc: "Organize documents by client and matter. Data stays strictly separated across engagements.", icon: Users },
         { title: "AI-Powered Indexing", desc: "Every uploaded document is automatically processed and indexed, making it instantly searchable and chat-ready.", icon: Brain },
-        { title: "Authority Binder Export", desc: "Build curated binders of key authorities and export structured, audit-ready JSON packs.", icon: FolderOpen },
+        { title: "Authority Binder Export", desc: "Build curated binders of key authorities and export structured, court-ready authority bundles.", icon: FolderOpen },
         { title: "Full Audit Trail", desc: "Complete provenance tracking. Know exactly when documents were uploaded, processed, and referenced.", icon: History }
     ];
 
@@ -392,7 +392,7 @@ export default function LandingPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-semibold">Authority Binder Packs</h4>
-                                    <p className="text-muted-foreground text-sm">Curated, exportable JSON packs of verified citations with key passages and source metadata.</p>
+                                    <p className="text-muted-foreground text-sm">Curated, exportable bundles of verified citations with key passages and source details.</p>
                                 </div>
                             </div>
                             <div className="flex items-start gap-4">

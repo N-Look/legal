@@ -101,7 +101,7 @@ export function UploadForm() {
           Upload Document
         </h1>
         <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-          Upload a file or paste text, add metadata, and index for RAG search.
+          Upload a file or paste text, tag it with case details, and make it searchable.
         </p>
       </div>
 
